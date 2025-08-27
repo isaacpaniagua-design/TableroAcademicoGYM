@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema Académico Simplificado</title>
+    <title>Sistema Académico - Firestore</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         body { 
@@ -71,9 +73,63 @@
         .notification.success { background: linear-gradient(135deg, #10b981, #059669); }
         .notification.error { background: linear-gradient(135deg, #ef4444, #dc2626); }
         .notification.info { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+
+        .firestore-status {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-connected {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
+
+        .status-connecting {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+        }
+
+        .status-error {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .spinning {
+            animation: spin 1s linear infinite;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
     </style>
 </head>
 <body class="min-h-screen">
+    <!-- Firestore Status -->
+    <div id="firestoreStatus" class="firestore-status status-connecting">
+        <span class="spinning">🔄</span>
+        <span>Conectando a Firestore...</span>
+    </div>
+
     <!-- Login Screen -->
     <div id="loginScreen" class="min-h-screen flex items-center justify-center p-4">
         <div class="glass-effect rounded-3xl shadow-2xl p-8 w-full max-w-md">
@@ -84,7 +140,11 @@
                 <h1 class="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-2">
                     Control Académico
                 </h1>
-                <p class="text-gray-600">Sistema Simplificado</p>
+                <p class="text-gray-600">Sistema con Firestore</p>
+                <div class="mt-2 flex items-center justify-center space-x-2">
+                    <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    <span class="text-xs text-green-600 font-medium">Conectado a la nube</span>
+                </div>
             </div>
             
             <form id="loginForm" class="space-y-6">
@@ -102,24 +162,30 @@
                            placeholder="••••••••">
                 </div>
                 
-                <button type="submit" class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-300">
+                <button type="submit" id="loginBtn" class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-300">
                     ✨ Iniciar Sesión
                 </button>
             </form>
 
             <!-- Demo Credentials -->
             <div class="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-200">
-                <h4 class="text-sm font-semibold text-blue-900 mb-3">🔑 Usuarios Demo:</h4>
+                <h4 class="text-sm font-semibold text-blue-900 mb-3">🔑 Usuarios Demo (Firestore):</h4>
                 <div class="space-y-2">
                     <button onclick="fillLogin('admin@universidad.edu', 'admin123')" class="w-full text-left p-2 bg-white rounded-lg hover:bg-blue-100 transition-colors">
                         <div class="text-xs font-medium text-purple-800">👑 Administrador</div>
-                        <div class="text-xs text-purple-600">Acceso completo</div>
+                        <div class="text-xs text-purple-600">Acceso completo + Firestore</div>
                     </button>
                     <button onclick="fillLogin('docente@universidad.edu', 'doc123')" class="w-full text-left p-2 bg-white rounded-lg hover:bg-blue-100 transition-colors">
                         <div class="text-xs font-medium text-blue-800">👨‍🏫 Docente</div>
-                        <div class="text-xs text-blue-600">Ver mis actividades</div>
+                        <div class="text-xs text-blue-600">Ver mis actividades + Sync</div>
                     </button>
                 </div>
+            </div>
+
+            <div class="mt-4 text-center">
+                <p class="text-xs text-gray-500">
+                    🔥 Powered by Firestore - Datos en tiempo real
+                </p>
             </div>
         </div>
     </div>
@@ -138,7 +204,7 @@
                             <h1 class="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
                                 Control Académico
                             </h1>
-                            <p class="text-sm text-gray-600 font-medium">Sistema Simplificado</p>
+                            <p class="text-sm text-gray-600 font-medium">Sistema con Firestore</p>
                         </div>
                     </div>
                     <div class="flex items-center space-x-4">
@@ -192,7 +258,9 @@
                             <div class="flex items-center justify-between">
                                 <div>
                                     <p class="text-blue-600 text-sm font-medium">Total Docentes</p>
-                                    <p id="totalTeachers" class="text-3xl font-bold text-blue-900">0</p>
+                                    <p id="totalTeachers" class="text-3xl font-bold text-blue-900">
+                                        <span class="loading"></span>
+                                    </p>
                                 </div>
                                 <div class="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center">
                                     <span class="text-blue-600 text-2xl">👥</span>
@@ -204,7 +272,9 @@
                             <div class="flex items-center justify-between">
                                 <div>
                                     <p class="text-green-600 text-sm font-medium">Actividades</p>
-                                    <p id="totalActivities" class="text-3xl font-bold text-green-900">0</p>
+                                    <p id="totalActivities" class="text-3xl font-bold text-green-900">
+                                        <span class="loading"></span>
+                                    </p>
                                 </div>
                                 <div class="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center">
                                     <span class="text-green-600 text-2xl">📋</span>
@@ -216,7 +286,9 @@
                             <div class="flex items-center justify-between">
                                 <div>
                                     <p class="text-purple-600 text-sm font-medium">Completadas</p>
-                                    <p id="completedActivities" class="text-3xl font-bold text-purple-900">0</p>
+                                    <p id="completedActivities" class="text-3xl font-bold text-purple-900">
+                                        <span class="loading"></span>
+                                    </p>
                                 </div>
                                 <div class="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center">
                                     <span class="text-purple-600 text-2xl">✅</span>
@@ -229,7 +301,10 @@
                     <div class="bg-white rounded-2xl p-6 shadow-lg">
                         <h4 class="text-lg font-semibold text-gray-900 mb-4">Actividades Recientes</h4>
                         <div id="recentActivitiesList" class="space-y-3">
-                            <!-- Activities will be populated here -->
+                            <div class="text-center py-4">
+                                <span class="loading"></span>
+                                <p class="text-gray-500 mt-2">Cargando actividades...</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -255,7 +330,12 @@
                                 </tr>
                             </thead>
                             <tbody id="teachersTableBody" class="bg-white divide-y divide-gray-200">
-                                <!-- Teachers will be populated here -->
+                                <tr>
+                                    <td colspan="5" class="px-6 py-4 text-center">
+                                        <span class="loading"></span>
+                                        <p class="text-gray-500 mt-2">Cargando docentes...</p>
+                                    </td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
@@ -271,7 +351,10 @@
                     </div>
                     
                     <div id="activitiesGrid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        <!-- Activities will be populated here -->
+                        <div class="col-span-full text-center py-12">
+                            <span class="loading"></span>
+                            <p class="text-gray-500 mt-2">Cargando actividades...</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -304,7 +387,8 @@
                         Cancelar
                     </button>
                     <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg">
-                        Agregar
+                        <span id="addTeacherBtnText">Agregar</span>
+                        <span id="addTeacherLoader" class="loading hidden"></span>
                     </button>
                 </div>
             </form>
@@ -353,7 +437,8 @@
                         Cancelar
                     </button>
                     <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg">
-                        Crear
+                        <span id="addActivityBtnText">Crear</span>
+                        <span id="addActivityLoader" class="loading hidden"></span>
                     </button>
                 </div>
             </form>
@@ -361,75 +446,163 @@
     </div>
 
     <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDGpS6g8nJZ8X2M5vL9wQ3pR7tY4uI6oP2",
+            authDomain: "sistema-academico-2024.firebaseapp.com",
+            projectId: "sistema-academico-2024",
+            storageBucket: "sistema-academico-2024.appspot.com",
+            messagingSenderId: "123456789012",
+            appId: "1:123456789012:web:abcdef123456789012345"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
         // Global variables
         let currentUser = null;
         let currentTab = 'dashboard';
-
-        // Simple user system
-        const users = {
-            'admin@universidad.edu': {
-                password: 'admin123',
-                name: 'Administrador',
-                role: 'admin'
-            },
-            'docente@universidad.edu': {
-                password: 'doc123',
-                name: 'Dr. Juan Pérez',
-                role: 'teacher'
-            }
-        };
-
-        // Simple data storage
-        let teachers = [
-            { 
-                id: 1, 
-                name: 'Dr. Juan Pérez', 
-                email: 'docente@universidad.edu', 
-                specialty: 'Desarrollo Web'
-            },
-            { 
-                id: 2, 
-                name: 'Dra. Ana García', 
-                email: 'ana.garcia@universidad.edu', 
-                specialty: 'Base de Datos'
-            }
-        ];
-
-        let activities = [
-            { 
-                id: 1, 
-                title: 'Actualización Plan de Estudios', 
-                description: 'Revisar contenidos de desarrollo web', 
-                teacherId: 1,
-                deadline: '2024-02-15', 
-                priority: 'alta', 
-                completed: false
-            },
-            { 
-                id: 2, 
-                title: 'Capacitación React', 
-                description: 'Completar curso de React', 
-                teacherId: 1,
-                deadline: '2024-02-28', 
-                priority: 'media', 
-                completed: true
-            },
-            { 
-                id: 3, 
-                title: 'Revisión Exámenes', 
-                description: 'Revisar exámenes finales', 
-                teacherId: 2,
-                deadline: '2024-03-10', 
-                priority: 'alta', 
-                completed: false
-            }
-        ];
+        let teachers = [];
+        let activities = [];
+        let unsubscribeTeachers = null;
+        let unsubscribeActivities = null;
 
         // Initialize app
         document.addEventListener('DOMContentLoaded', function() {
+            initializeFirestore();
             checkAuthStatus();
             setupEventListeners();
         });
+
+        async function initializeFirestore() {
+            try {
+                updateFirestoreStatus('connecting');
+                
+                // Test connection
+                await db.collection('test').limit(1).get();
+                
+                updateFirestoreStatus('connected');
+                showNotification('Conectado a Firestore exitosamente', 'success');
+                
+                // Initialize demo data if needed
+                await initializeDemoData();
+                
+            } catch (error) {
+                console.error('Error connecting to Firestore:', error);
+                updateFirestoreStatus('error');
+                showNotification('Error conectando a Firestore: ' + error.message, 'error');
+            }
+        }
+
+        function updateFirestoreStatus(status) {
+            const statusElement = document.getElementById('firestoreStatus');
+            
+            statusElement.classList.remove('status-connected', 'status-connecting', 'status-error');
+            
+            switch (status) {
+                case 'connected':
+                    statusElement.classList.add('status-connected');
+                    statusElement.innerHTML = '<span>🔥</span><span>Firestore Conectado</span>';
+                    break;
+                case 'connecting':
+                    statusElement.classList.add('status-connecting');
+                    statusElement.innerHTML = '<span class="spinning">🔄</span><span>Conectando a Firestore...</span>';
+                    break;
+                case 'error':
+                    statusElement.classList.add('status-error');
+                    statusElement.innerHTML = '<span>❌</span><span>Error de Conexión</span>';
+                    break;
+            }
+        }
+
+        async function initializeDemoData() {
+            try {
+                // Check if users exist
+                const usersSnapshot = await db.collection('users').get();
+                if (usersSnapshot.empty) {
+                    // Create demo users
+                    await db.collection('users').doc('admin@universidad.edu').set({
+                        name: 'Administrador',
+                        email: 'admin@universidad.edu',
+                        password: 'admin123', // In production, this should be hashed
+                        role: 'admin',
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+
+                    await db.collection('users').doc('docente@universidad.edu').set({
+                        name: 'Dr. Juan Pérez',
+                        email: 'docente@universidad.edu',
+                        password: 'doc123', // In production, this should be hashed
+                        role: 'teacher',
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+
+                    console.log('Demo users created');
+                }
+
+                // Check if teachers exist
+                const teachersSnapshot = await db.collection('teachers').get();
+                if (teachersSnapshot.empty) {
+                    // Create demo teachers
+                    await db.collection('teachers').add({
+                        name: 'Dr. Juan Pérez',
+                        email: 'docente@universidad.edu',
+                        specialty: 'Desarrollo Web',
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+
+                    await db.collection('teachers').add({
+                        name: 'Dra. Ana García',
+                        email: 'ana.garcia@universidad.edu',
+                        specialty: 'Base de Datos',
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+
+                    console.log('Demo teachers created');
+                }
+
+                // Check if activities exist
+                const activitiesSnapshot = await db.collection('activities').get();
+                if (activitiesSnapshot.empty) {
+                    // Create demo activities
+                    await db.collection('activities').add({
+                        title: 'Actualización Plan de Estudios',
+                        description: 'Revisar contenidos de desarrollo web',
+                        teacherEmail: 'docente@universidad.edu',
+                        deadline: '2024-02-15',
+                        priority: 'alta',
+                        completed: false,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+
+                    await db.collection('activities').add({
+                        title: 'Capacitación React',
+                        description: 'Completar curso de React',
+                        teacherEmail: 'docente@universidad.edu',
+                        deadline: '2024-02-28',
+                        priority: 'media',
+                        completed: true,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+
+                    await db.collection('activities').add({
+                        title: 'Revisión Exámenes',
+                        description: 'Revisar exámenes finales',
+                        teacherEmail: 'ana.garcia@universidad.edu',
+                        deadline: '2024-03-10',
+                        priority: 'alta',
+                        completed: false,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+
+                    console.log('Demo activities created');
+                }
+
+            } catch (error) {
+                console.error('Error initializing demo data:', error);
+            }
+        }
 
         function setupEventListeners() {
             document.getElementById('loginForm').addEventListener('submit', handleLogin);
@@ -448,38 +621,59 @@
             }
         }
 
-        function handleLogin(e) {
+        async function handleLogin(e) {
             e.preventDefault();
             
-            const email = document.getElementById('loginEmail').value.trim();
-            const password = document.getElementById('loginPassword').value;
-
-            const user = users[email];
+            const loginBtn = document.getElementById('loginBtn');
+            const originalText = loginBtn.innerHTML;
+            loginBtn.innerHTML = '<span class="loading"></span> Verificando...';
+            loginBtn.disabled = true;
             
-            if (!user) {
-                showNotification('Usuario no encontrado', 'error');
-                return;
+            try {
+                const email = document.getElementById('loginEmail').value.trim();
+                const password = document.getElementById('loginPassword').value;
+
+                // Check user in Firestore
+                const userDoc = await db.collection('users').doc(email).get();
+                
+                if (!userDoc.exists) {
+                    throw new Error('Usuario no encontrado');
+                }
+
+                const userData = userDoc.data();
+                
+                if (userData.password !== password) {
+                    throw new Error('Contraseña incorrecta');
+                }
+
+                currentUser = {
+                    email: email,
+                    name: userData.name,
+                    role: userData.role
+                };
+
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                showMainApp();
+                showNotification(`¡Bienvenido ${userData.name}!`, 'success');
+
+            } catch (error) {
+                console.error('Login error:', error);
+                showNotification(error.message, 'error');
+            } finally {
+                loginBtn.innerHTML = originalText;
+                loginBtn.disabled = false;
             }
-
-            if (user.password !== password) {
-                showNotification('Contraseña incorrecta', 'error');
-                return;
-            }
-
-            currentUser = {
-                email: email,
-                name: user.name,
-                role: user.role
-            };
-
-            localStorage.setItem('currentUser', JSON.stringify(currentUser));
-            showMainApp();
-            showNotification(`¡Bienvenido ${user.name}!`, 'success');
         }
 
         function logout() {
+            // Unsubscribe from real-time listeners
+            if (unsubscribeTeachers) unsubscribeTeachers();
+            if (unsubscribeActivities) unsubscribeActivities();
+            
             localStorage.removeItem('currentUser');
             currentUser = null;
+            teachers = [];
+            activities = [];
             showLoginScreen();
             showNotification('Sesión cerrada', 'info');
         }
@@ -499,6 +693,7 @@
             document.getElementById('mainApp').classList.remove('hidden');
             
             updateUserInterface();
+            setupRealtimeListeners();
             showTab('dashboard');
         }
 
@@ -512,6 +707,47 @@
                 document.getElementById('addActivityBtn').style.display = 'none';
                 document.getElementById('teachersTab').style.display = 'none';
             }
+        }
+
+        // Real-time listeners
+        function setupRealtimeListeners() {
+            // Listen to teachers collection
+            unsubscribeTeachers = db.collection('teachers')
+                .orderBy('createdAt', 'desc')
+                .onSnapshot((snapshot) => {
+                    teachers = [];
+                    snapshot.forEach((doc) => {
+                        teachers.push({
+                            id: doc.id,
+                            ...doc.data()
+                        });
+                    });
+                    
+                    if (currentTab === 'teachers') renderTeachers();
+                    if (currentTab === 'dashboard') renderDashboard();
+                }, (error) => {
+                    console.error('Error listening to teachers:', error);
+                    showNotification('Error sincronizando docentes', 'error');
+                });
+
+            // Listen to activities collection
+            unsubscribeActivities = db.collection('activities')
+                .orderBy('createdAt', 'desc')
+                .onSnapshot((snapshot) => {
+                    activities = [];
+                    snapshot.forEach((doc) => {
+                        activities.push({
+                            id: doc.id,
+                            ...doc.data()
+                        });
+                    });
+                    
+                    if (currentTab === 'activities') renderActivities();
+                    if (currentTab === 'dashboard') renderDashboard();
+                }, (error) => {
+                    console.error('Error listening to activities:', error);
+                    showNotification('Error sincronizando actividades', 'error');
+                });
         }
 
         // Tab navigation
@@ -558,15 +794,24 @@
 
         function renderRecentActivities() {
             const recentList = document.getElementById('recentActivitiesList');
-            const recentActivities = activities.slice(-5).reverse();
+            const recentActivities = activities.slice(0, 5);
+            
+            if (recentActivities.length === 0) {
+                recentList.innerHTML = `
+                    <div class="text-center py-4">
+                        <p class="text-gray-500">No hay actividades recientes</p>
+                    </div>
+                `;
+                return;
+            }
             
             recentList.innerHTML = recentActivities.map(activity => {
-                const teacher = teachers.find(t => t.id === activity.teacherId);
+                const teacher = teachers.find(t => t.email === activity.teacherEmail);
                 return `
                     <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                         <div>
                             <h5 class="font-medium text-gray-900">${activity.title}</h5>
-                            <p class="text-sm text-gray-600">Asignado a: ${teacher ? teacher.name : 'Sin asignar'}</p>
+                            <p class="text-sm text-gray-600">Asignado a: ${teacher ? teacher.name : activity.teacherEmail}</p>
                         </div>
                         <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full priority-${activity.priority}">
                             ${activity.priority.toUpperCase()}
@@ -579,8 +824,19 @@
         function renderTeachers() {
             const tbody = document.getElementById('teachersTableBody');
             
+            if (teachers.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="px-6 py-4 text-center text-gray-500">
+                            No hay docentes registrados
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
             tbody.innerHTML = teachers.map(teacher => {
-                const teacherActivities = activities.filter(a => a.teacherId === teacher.id);
+                const teacherActivities = activities.filter(a => a.teacherEmail === teacher.email);
                 const completedCount = teacherActivities.filter(a => a.completed).length;
                 
                 return `
@@ -599,8 +855,8 @@
                             ${completedCount}/${teacherActivities.length} completadas
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <button onclick="editTeacher(${teacher.id})" class="text-indigo-600 hover:text-indigo-900 mr-3">Editar</button>
-                            <button onclick="deleteTeacher(${teacher.id})" class="text-red-600 hover:text-red-900">Eliminar</button>
+                            <button onclick="editTeacher('${teacher.id}')" class="text-indigo-600 hover:text-indigo-900 mr-3">Editar</button>
+                            <button onclick="deleteTeacher('${teacher.id}')" class="text-red-600 hover:text-red-900">Eliminar</button>
                         </td>
                     </tr>
                 `;
@@ -613,10 +869,7 @@
             
             // Filter activities for teachers (only their own)
             if (currentUser.role === 'teacher') {
-                const teacher = teachers.find(t => t.email === currentUser.email);
-                if (teacher) {
-                    displayActivities = activities.filter(a => a.teacherId === teacher.id);
-                }
+                displayActivities = activities.filter(a => a.teacherEmail === currentUser.email);
             }
             
             if (displayActivities.length === 0) {
@@ -631,7 +884,7 @@
             }
             
             grid.innerHTML = displayActivities.map(activity => {
-                const teacher = teachers.find(t => t.id === activity.teacherId);
+                const teacher = teachers.find(t => t.email === activity.teacherEmail);
                 
                 return `
                     <div class="bg-white rounded-2xl p-6 shadow-lg ${activity.completed ? 'border-2 border-green-200' : ''}">
@@ -646,7 +899,7 @@
                         </div>
                         
                         <div class="bg-blue-50 rounded-xl p-4 mb-4">
-                            <p class="text-blue-800 font-semibold text-sm">Asignado a: ${teacher ? teacher.name : 'Sin asignar'}</p>
+                            <p class="text-blue-800 font-semibold text-sm">Asignado a: ${teacher ? teacher.name : activity.teacherEmail}</p>
                         </div>
                         
                         <div class="flex items-center justify-between mb-4">
@@ -657,18 +910,18 @@
                         <div class="flex items-center justify-between">
                             <div class="flex items-center space-x-2">
                                 <input type="checkbox" ${activity.completed ? 'checked' : ''} 
-                                       onchange="toggleActivity(${activity.id})" 
+                                       onchange="toggleActivity('${activity.id}')" 
                                        class="w-4 h-4 text-green-600 rounded">
                                 <span class="text-sm text-gray-700">Completada</span>
                             </div>
                             
                             ${currentUser.role === 'admin' ? `
                                 <div class="flex items-center space-x-2">
-                                    <button onclick="editActivity(${activity.id})" 
+                                    <button onclick="editActivity('${activity.id}')" 
                                             class="text-indigo-600 hover:text-indigo-800 text-sm">
                                         ✏️ Editar
                                     </button>
-                                    <button onclick="deleteActivity(${activity.id})" 
+                                    <button onclick="deleteActivity('${activity.id}')" 
                                             class="text-red-600 hover:text-red-800 text-sm">
                                         🗑️ Eliminar
                                     </button>
@@ -690,11 +943,11 @@
             document.getElementById('addTeacherForm').reset();
         }
 
-        function showAddActivityModal() {
+        async function showAddActivityModal() {
             // Populate teacher select
             const teacherSelect = document.getElementById('activityTeacher');
             teacherSelect.innerHTML = '<option value="">Seleccionar docente...</option>' +
-                teachers.map(teacher => `<option value="${teacher.id}">${teacher.name}</option>`).join('');
+                teachers.map(teacher => `<option value="${teacher.email}">${teacher.name}</option>`).join('');
             
             document.getElementById('addActivityModal').classList.remove('hidden');
         }
@@ -705,101 +958,153 @@
         }
 
         // CRUD operations
-        function handleAddTeacher(e) {
+        async function handleAddTeacher(e) {
             e.preventDefault();
             
-            const name = document.getElementById('teacherName').value;
-            const email = document.getElementById('teacherEmail').value;
-            const specialty = document.getElementById('teacherSpecialty').value;
+            const btnText = document.getElementById('addTeacherBtnText');
+            const loader = document.getElementById('addTeacherLoader');
             
-            const newTeacher = {
-                id: teachers.length + 1,
-                name: name,
-                email: email,
-                specialty: specialty
-            };
+            btnText.classList.add('hidden');
+            loader.classList.remove('hidden');
             
-            teachers.push(newTeacher);
-            closeAddTeacherModal();
-            renderTeachers();
-            showNotification('Docente agregado exitosamente', 'success');
-        }
-
-        function handleAddActivity(e) {
-            e.preventDefault();
-            
-            const title = document.getElementById('activityTitle').value;
-            const description = document.getElementById('activityDescription').value;
-            const teacherId = parseInt(document.getElementById('activityTeacher').value);
-            const deadline = document.getElementById('activityDeadline').value;
-            const priority = document.getElementById('activityPriority').value;
-            
-            const newActivity = {
-                id: activities.length + 1,
-                title: title,
-                description: description,
-                teacherId: teacherId,
-                deadline: deadline,
-                priority: priority,
-                completed: false
-            };
-            
-            activities.push(newActivity);
-            closeAddActivityModal();
-            renderActivities();
-            renderDashboard(); // Update dashboard stats
-            showNotification('Actividad creada exitosamente', 'success');
-        }
-
-        function toggleActivity(activityId) {
-            const activity = activities.find(a => a.id === activityId);
-            if (activity) {
-                activity.completed = !activity.completed;
-                renderActivities();
-                renderDashboard(); // Update dashboard stats
-                showNotification(activity.completed ? 'Actividad completada' : 'Actividad marcada como pendiente', 'success');
+            try {
+                const name = document.getElementById('teacherName').value;
+                const email = document.getElementById('teacherEmail').value;
+                const specialty = document.getElementById('teacherSpecialty').value;
+                
+                await db.collection('teachers').add({
+                    name: name,
+                    email: email,
+                    specialty: specialty,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                closeAddTeacherModal();
+                showNotification('Docente agregado exitosamente', 'success');
+                
+            } catch (error) {
+                console.error('Error adding teacher:', error);
+                showNotification('Error al agregar docente: ' + error.message, 'error');
+            } finally {
+                btnText.classList.remove('hidden');
+                loader.classList.add('hidden');
             }
         }
 
-        function editTeacher(teacherId) {
+        async function handleAddActivity(e) {
+            e.preventDefault();
+            
+            const btnText = document.getElementById('addActivityBtnText');
+            const loader = document.getElementById('addActivityLoader');
+            
+            btnText.classList.add('hidden');
+            loader.classList.remove('hidden');
+            
+            try {
+                const title = document.getElementById('activityTitle').value;
+                const description = document.getElementById('activityDescription').value;
+                const teacherEmail = document.getElementById('activityTeacher').value;
+                const deadline = document.getElementById('activityDeadline').value;
+                const priority = document.getElementById('activityPriority').value;
+                
+                await db.collection('activities').add({
+                    title: title,
+                    description: description,
+                    teacherEmail: teacherEmail,
+                    deadline: deadline,
+                    priority: priority,
+                    completed: false,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                closeAddActivityModal();
+                showNotification('Actividad creada exitosamente', 'success');
+                
+            } catch (error) {
+                console.error('Error adding activity:', error);
+                showNotification('Error al crear actividad: ' + error.message, 'error');
+            } finally {
+                btnText.classList.remove('hidden');
+                loader.classList.add('hidden');
+            }
+        }
+
+        async function toggleActivity(activityId) {
+            try {
+                const activity = activities.find(a => a.id === activityId);
+                if (activity) {
+                    await db.collection('activities').doc(activityId).update({
+                        completed: !activity.completed
+                    });
+                    
+                    showNotification(
+                        !activity.completed ? 'Actividad completada' : 'Actividad marcada como pendiente', 
+                        'success'
+                    );
+                }
+            } catch (error) {
+                console.error('Error toggling activity:', error);
+                showNotification('Error al actualizar actividad: ' + error.message, 'error');
+            }
+        }
+
+        async function editTeacher(teacherId) {
             const teacher = teachers.find(t => t.id === teacherId);
             if (teacher) {
                 const newName = prompt('Nuevo nombre:', teacher.name);
-                if (newName) {
-                    teacher.name = newName;
-                    renderTeachers();
-                    showNotification('Docente actualizado', 'success');
+                if (newName && newName !== teacher.name) {
+                    try {
+                        await db.collection('teachers').doc(teacherId).update({
+                            name: newName
+                        });
+                        showNotification('Docente actualizado', 'success');
+                    } catch (error) {
+                        console.error('Error updating teacher:', error);
+                        showNotification('Error al actualizar docente: ' + error.message, 'error');
+                    }
                 }
             }
         }
 
-        function deleteTeacher(teacherId) {
+        async function deleteTeacher(teacherId) {
             if (confirm('¿Estás seguro de eliminar este docente?')) {
-                teachers = teachers.filter(t => t.id !== teacherId);
-                renderTeachers();
-                renderDashboard();
-                showNotification('Docente eliminado', 'success');
+                try {
+                    await db.collection('teachers').doc(teacherId).delete();
+                    showNotification('Docente eliminado', 'success');
+                } catch (error) {
+                    console.error('Error deleting teacher:', error);
+                    showNotification('Error al eliminar docente: ' + error.message, 'error');
+                }
             }
         }
 
-        function editActivity(activityId) {
+        async function editActivity(activityId) {
             const activity = activities.find(a => a.id === activityId);
             if (activity) {
                 const newTitle = prompt('Nuevo título:', activity.title);
-                if (newTitle) {
-                    activity.title = newTitle;
-                    renderActivities();
-                    showNotification('Actividad actualizada', 'success');
+                if (newTitle && newTitle !== activity.title) {
+                    try {
+                        await db.collection('activities').doc(activityId).update({
+                            title: newTitle
+                        });
+                        showNotification('Actividad actualizada', 'success');
+                    } catch (error) {
+                        console.error('Error updating activity:', error);
+                        showNotification('Error al actualizar actividad: ' + error.message, 'error');
+                    }
                 }
             }
         }
 
-        function deleteActivity(activityId) {
+        async function deleteActivity(activityId) {
             if (confirm('¿Estás seguro de eliminar esta actividad?')) {
-                activities = activities.filter(a => a.id !== activityId);
-                renderActivities();
-                renderDashboard();
-                showNotification('Actividad eliminada', 'success');
+                try {
+                    await db.collection('activities').doc(activityId).delete();
+                    showNotification('Actividad eliminada', 'success');
+                } catch (error) {
+                    console.error('Error deleting activity:', error);
+                    showNotification('Error al eliminar actividad: ' + error.message, 'error');
+                }
             }
         }
 
@@ -813,8 +1118,8 @@
             
             setTimeout(() => {
                 notification.remove();
-            }, 3000);
+            }, 4000);
         }
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'975e9c79546ed187',t:'MTc1NjMyOTYwOS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'975ea74d34e92df4',t:'MTc1NjMzMDA1Mi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
