@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema Académico - Control Docente Avanzado</title>
+    <title>Sistema Académico - Control Docente Multi-Carrera</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -272,6 +272,63 @@
         .theme-toggle:hover {
             transform: scale(1.1);
         }
+
+        .role-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .role-super-admin {
+            background: linear-gradient(135deg, #7c3aed, #5b21b6);
+            color: white;
+        }
+
+        .role-admin-software {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: white;
+        }
+
+        .role-admin-mecatronica {
+            background: linear-gradient(135deg, #059669, #047857);
+            color: white;
+        }
+
+        .role-teacher {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+        }
+
+        .role-assistant {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color: white;
+        }
+
+        .career-software {
+            background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+            border: 2px solid #3b82f6;
+        }
+
+        .career-mecatronica {
+            background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+            border: 2px solid #10b981;
+        }
+
+        .career-both {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            border: 2px solid #f59e0b;
+        }
+
+        .permission-denied {
+            background: linear-gradient(135deg, #fee2e2, #fecaca);
+            border: 2px solid #ef4444;
+            color: #dc2626;
+            text-align: center;
+            padding: 40px;
+            border-radius: 12px;
+        }
     </style>
 </head>
 <body class="min-h-screen">
@@ -294,7 +351,7 @@
                     <span class="text-white font-bold text-3xl">🎓</span>
                 </div>
                 <h1 class="text-3xl font-bold gradient-text mb-2">Control Académico</h1>
-                <p class="text-gray-600">Sistema de Gestión Docente Avanzado</p>
+                <p class="text-gray-600">Sistema Multi-Carrera con Roles</p>
                 <div class="mt-2 flex items-center justify-center space-x-2">
                     <div class="w-2 h-2 bg-green-500 rounded-full pulse"></div>
                     <span class="text-xs text-green-600 font-medium">Conectado a Firebase</span>
@@ -325,20 +382,36 @@
             <div class="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-200">
                 <h4 class="text-sm font-semibold text-blue-900 mb-3">🔑 Credenciales Demo:</h4>
                 <div class="space-y-2">
-                    <button onclick="fillLogin('admin@universidad.edu', 'admin123')" class="w-full text-left p-2 bg-white rounded-lg hover:bg-blue-100 transition-colors">
-                        <div class="text-xs font-medium text-blue-800">👑 Administrador</div>
-                        <div class="text-xs text-blue-600">admin@universidad.edu</div>
+                    <button onclick="fillLogin('superadmin@universidad.edu', 'super123')" class="w-full text-left p-2 bg-white rounded-lg hover:bg-blue-100 transition-colors">
+                        <div class="text-xs font-medium text-purple-800">👑 Super Administrador</div>
+                        <div class="text-xs text-purple-600">Acceso total a ambas carreras</div>
                     </button>
-                    <button onclick="fillLogin('profesor@universidad.edu', 'profesor123')" class="w-full text-left p-2 bg-white rounded-lg hover:bg-blue-100 transition-colors">
-                        <div class="text-xs font-medium text-blue-800">👨‍🏫 Profesor</div>
-                        <div class="text-xs text-blue-600">profesor@universidad.edu</div>
+                    <button onclick="fillLogin('admin.software@universidad.edu', 'admin123')" class="w-full text-left p-2 bg-white rounded-lg hover:bg-blue-100 transition-colors">
+                        <div class="text-xs font-medium text-blue-800">💻 Admin Software</div>
+                        <div class="text-xs text-blue-600">Administrador Ing. Software</div>
+                    </button>
+                    <button onclick="fillLogin('admin.mecatronica@universidad.edu', 'admin123')" class="w-full text-left p-2 bg-white rounded-lg hover:bg-blue-100 transition-colors">
+                        <div class="text-xs font-medium text-green-800">⚙️ Admin Mecatrónica</div>
+                        <div class="text-xs text-green-600">Administrador Ing. Mecatrónica</div>
+                    </button>
+                    <button onclick="fillLogin('auxiliar.software@universidad.edu', 'aux123')" class="w-full text-left p-2 bg-white rounded-lg hover:bg-blue-100 transition-colors">
+                        <div class="text-xs font-medium text-purple-800">🔧 Auxiliar Software</div>
+                        <div class="text-xs text-purple-600">Profesor auxiliar</div>
+                    </button>
+                    <button onclick="fillLogin('docente.ambas@universidad.edu', 'doc123')" class="w-full text-left p-2 bg-white rounded-lg hover:bg-blue-100 transition-colors">
+                        <div class="text-xs font-medium text-orange-800">👨‍🏫 Docente Ambas</div>
+                        <div class="text-xs text-orange-600">Enseña en ambas carreras</div>
+                    </button>
+                    <button onclick="fillLogin('docente.software@universidad.edu', 'doc123')" class="w-full text-left p-2 bg-white rounded-lg hover:bg-blue-100 transition-colors">
+                        <div class="text-xs font-medium text-blue-800">👨‍💻 Docente Software</div>
+                        <div class="text-xs text-blue-600">Solo Ing. Software</div>
                     </button>
                 </div>
             </div>
 
             <div class="mt-4 text-center">
                 <p class="text-xs text-gray-500">
-                    🔥 Powered by Firebase Firestore
+                    🔥 Sistema Multi-Carrera con Firebase
                 </p>
             </div>
         </div>
@@ -356,7 +429,7 @@
                         </div>
                         <div>
                             <h1 class="text-2xl font-bold gradient-text">Control Académico</h1>
-                            <p class="text-sm text-gray-600 font-medium">Sistema de Gestión Docente Avanzado</p>
+                            <p class="text-sm text-gray-600 font-medium">Sistema Multi-Carrera con Roles</p>
                         </div>
                     </div>
                     <div class="flex items-center space-x-4">
@@ -368,8 +441,11 @@
                         </div>
                         
                         <div class="text-right">
-                            <p id="userName" class="text-sm font-semibold text-gray-800">Usuario</p>
-                            <p id="userRole" class="text-xs text-gray-600">Rol</p>
+                            <div class="flex items-center space-x-2">
+                                <p id="userName" class="text-sm font-semibold text-gray-800">Usuario</p>
+                                <span id="userRoleBadge" class="role-badge">ROL</span>
+                            </div>
+                            <p id="userCareers" class="text-xs text-gray-600">Carreras</p>
                         </div>
                         <button onclick="logout()" class="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white px-4 py-2 rounded-xl text-sm font-medium">
                             🚪 Salir
@@ -384,28 +460,51 @@
             <!-- Career Selection -->
             <div id="careerSelection" class="mb-8">
                 <h2 class="text-xl font-semibold text-white mb-4">Seleccionar Carrera</h2>
-                <div class="grid md:grid-cols-2 gap-6">
-                    <div class="glass-effect rounded-xl p-6 cursor-pointer hover:shadow-xl transition-all" onclick="selectCareer('software')">
+                <div id="careerOptions" class="grid md:grid-cols-2 gap-6">
+                    <!-- Career options will be populated based on user permissions -->
+                </div>
+            </div>
+
+            <!-- User Management (Super Admin Only) -->
+            <div id="userManagement" class="hidden mb-8">
+                <div class="glass-effect rounded-2xl p-8">
+                    <div class="flex items-center justify-between mb-6">
                         <div class="flex items-center space-x-4">
-                            <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                                <span class="text-2xl">💻</span>
+                            <div class="w-16 h-16 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-2xl flex items-center justify-center">
+                                <span class="text-3xl">👥</span>
                             </div>
                             <div>
-                                <h3 class="text-lg font-semibold text-gray-900">Ingeniería en Software</h3>
-                                <p class="text-gray-600 text-sm">Gestión de docentes y actividades</p>
+                                <h2 class="text-3xl font-bold gradient-text">Gestión de Usuarios</h2>
+                                <p class="text-gray-600 font-medium">Administrar roles y permisos</p>
                             </div>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <button onclick="showAddUserModal()" class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-6 py-3 rounded-xl font-medium">
+                                + Agregar Usuario
+                            </button>
+                            <button onclick="goToCareerSelection()" class="bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white px-6 py-3 rounded-xl font-medium">
+                                ← Carreras
+                            </button>
                         </div>
                     </div>
-                    <div class="glass-effect rounded-xl p-6 cursor-pointer hover:shadow-xl transition-all" onclick="selectCareer('mecatronica')">
-                        <div class="flex items-center space-x-4">
-                            <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                                <span class="text-2xl">⚙️</span>
-                            </div>
-                            <div>
-                                <h3 class="text-lg font-semibold text-gray-900">Ingeniería en Mecatrónica</h3>
-                                <p class="text-gray-600 text-sm">Gestión de docentes y actividades</p>
-                            </div>
-                        </div>
+
+                    <!-- Users Table -->
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Usuario</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rol</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Carreras</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody" class="bg-white divide-y divide-gray-200">
+                                <!-- Users will be populated here -->
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -421,15 +520,15 @@
                             </div>
                             <div>
                                 <h2 id="careerTitle" class="text-3xl font-bold gradient-text">Carrera</h2>
-                                <p class="text-gray-600 font-medium">Panel de Control Avanzado</p>
+                                <p class="text-gray-600 font-medium">Panel de Control</p>
                             </div>
                         </div>
                         <div class="flex items-center space-x-4">
                             <!-- Export Buttons -->
-                            <button onclick="exportData('excel')" class="export-button">
+                            <button id="exportExcelBtn" onclick="exportData('excel')" class="export-button hidden">
                                 📊 Excel
                             </button>
-                            <button onclick="exportData('pdf')" class="export-button">
+                            <button id="exportPdfBtn" onclick="exportData('pdf')" class="export-button hidden">
                                 📄 PDF
                             </button>
                             <button onclick="goBack()" class="bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white px-6 py-3 rounded-xl font-medium">
@@ -441,43 +540,8 @@
 
                 <!-- Navigation Tabs -->
                 <div class="glass-effect rounded-2xl mb-8 overflow-hidden">
-                    <div class="flex bg-gradient-to-r from-gray-50/50 to-white/50">
-                        <button id="dashboardTab" class="tab-button flex-1 px-8 py-5 text-sm font-semibold transition-all" onclick="showTab('dashboard')">
-                            <div class="flex items-center justify-center space-x-2">
-                                <span>📊</span>
-                                <span>Dashboard</span>
-                            </div>
-                        </button>
-                        <button id="teachersTab" class="tab-button flex-1 px-8 py-5 text-sm font-semibold transition-all" onclick="showTab('teachers')">
-                            <div class="flex items-center justify-center space-x-2">
-                                <span>👥</span>
-                                <span>Docentes</span>
-                            </div>
-                        </button>
-                        <button id="activitiesTab" class="tab-button flex-1 px-8 py-5 text-sm font-semibold transition-all" onclick="showTab('activities')">
-                            <div class="flex items-center justify-center space-x-2">
-                                <span>📋</span>
-                                <span>Actividades</span>
-                            </div>
-                        </button>
-                        <button id="kanbanTab" class="tab-button flex-1 px-8 py-5 text-sm font-semibold transition-all" onclick="showTab('kanban')">
-                            <div class="flex items-center justify-center space-x-2">
-                                <span>📌</span>
-                                <span>Kanban</span>
-                            </div>
-                        </button>
-                        <button id="calendarTab" class="tab-button flex-1 px-8 py-5 text-sm font-semibold transition-all" onclick="showTab('calendar')">
-                            <div class="flex items-center justify-center space-x-2">
-                                <span>📅</span>
-                                <span>Calendario</span>
-                            </div>
-                        </button>
-                        <button id="reportsTab" class="tab-button flex-1 px-8 py-5 text-sm font-semibold transition-all" onclick="showTab('reports')">
-                            <div class="flex items-center justify-center space-x-2">
-                                <span>📈</span>
-                                <span>Reportes</span>
-                            </div>
-                        </button>
+                    <div id="navigationTabs" class="flex bg-gradient-to-r from-gray-50/50 to-white/50">
+                        <!-- Tabs will be populated based on user permissions -->
                     </div>
                 </div>
 
@@ -576,7 +640,7 @@
                                     <option value="Inactivo">Inactivo</option>
                                 </select>
                                 
-                                <button id="addTeacherBtn" onclick="showAddTeacherModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg">
+                                <button id="addTeacherBtn" onclick="showAddTeacherModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg hidden">
                                     + Agregar Docente
                                 </button>
                             </div>
@@ -622,7 +686,7 @@
                                     <option value="pending">Pendientes</option>
                                 </select>
                                 
-                                <button id="addActivityBtn" onclick="showAddActivityModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg">
+                                <button id="addActivityBtn" onclick="showAddActivityModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg hidden">
                                     + Nueva Actividad
                                 </button>
                             </div>
@@ -723,9 +787,77 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Permission Denied Section -->
+                    <div id="permissionDenied" class="tab-content hidden">
+                        <div class="permission-denied">
+                            <div class="text-6xl mb-4">🚫</div>
+                            <h3 class="text-xl font-bold mb-2">Acceso Denegado</h3>
+                            <p class="text-sm">No tienes permisos para acceder a esta sección.</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </main>
+    </div>
+
+    <!-- Add User Modal (Super Admin Only) -->
+    <div id="addUserModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-white rounded-xl p-8 w-full max-w-md mx-4">
+            <h3 class="text-xl font-bold text-gray-900 mb-6">Agregar Nuevo Usuario</h3>
+            
+            <form id="addUserForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Nombre Completo</label>
+                    <input type="text" id="newUserName" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                    <input type="email" id="newUserEmail" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Contraseña</label>
+                    <input type="password" id="newUserPassword" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Rol</label>
+                    <select id="newUserRole" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                        <option value="">Seleccionar rol...</option>
+                        <option value="admin_software">Administrador Software</option>
+                        <option value="admin_mecatronica">Administrador Mecatrónica</option>
+                        <option value="assistant_software">Auxiliar Software</option>
+                        <option value="assistant_mecatronica">Auxiliar Mecatrónica</option>
+                        <option value="teacher">Docente</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Carreras Asignadas</label>
+                    <div class="space-y-2">
+                        <label class="flex items-center">
+                            <input type="checkbox" id="careerSoftware" value="software" class="mr-2">
+                            <span class="text-sm">Ingeniería en Software</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" id="careerMecatronica" value="mecatronica" class="mr-2">
+                            <span class="text-sm">Ingeniería en Mecatrónica</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button type="button" onclick="closeAddUserModal()" class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg">
+                        Crear Usuario
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <!-- Add Teacher Modal -->
@@ -835,7 +967,7 @@
     </div>
 
     <script>
-        // Firebase Configuration - Pre-configured with your credentials
+        // Firebase Configuration
         const firebaseConfig = {
             apiKey: "AIzaSyAA5ym0wSowCvbuqCg0Wo9b1NXca7wxnR0",
             authDomain: "tablero-de-control-docen-55a89.firebaseapp.com",
@@ -854,26 +986,73 @@
         let isDarkMode = false;
         let teacherSortOrder = { field: '', direction: 'asc' };
 
-        // Data storage
+        // Enhanced user system with roles and permissions
         let users = {
-            'admin@universidad.edu': {
-                password: 'admin123',
-                role: 'admin',
-                name: 'Administrador Sistema'
+            'superadmin@universidad.edu': {
+                password: 'super123',
+                role: 'super_admin',
+                name: 'Super Administrador',
+                careers: ['software', 'mecatronica'],
+                status: 'active'
             },
-            'profesor@universidad.edu': {
-                password: 'profesor123',
+            'admin.software@universidad.edu': {
+                password: 'admin123',
+                role: 'admin_software',
+                name: 'Admin Software',
+                careers: ['software'],
+                status: 'active'
+            },
+            'admin.mecatronica@universidad.edu': {
+                password: 'admin123',
+                role: 'admin_mecatronica',
+                name: 'Admin Mecatrónica',
+                careers: ['mecatronica'],
+                status: 'active'
+            },
+            'auxiliar.software@universidad.edu': {
+                password: 'aux123',
+                role: 'assistant_software',
+                name: 'Auxiliar Software',
+                careers: ['software'],
+                status: 'active'
+            },
+            'auxiliar.mecatronica@universidad.edu': {
+                password: 'aux123',
+                role: 'assistant_mecatronica',
+                name: 'Auxiliar Mecatrónica',
+                careers: ['mecatronica'],
+                status: 'active'
+            },
+            'docente.ambas@universidad.edu': {
+                password: 'doc123',
                 role: 'teacher',
-                name: 'Dr. Juan Pérez'
+                name: 'Dr. Juan Pérez',
+                careers: ['software', 'mecatronica'],
+                status: 'active'
+            },
+            'docente.software@universidad.edu': {
+                password: 'doc123',
+                role: 'teacher',
+                name: 'Dra. Ana García',
+                careers: ['software'],
+                status: 'active'
+            },
+            'docente.mecatronica@universidad.edu': {
+                password: 'doc123',
+                role: 'teacher',
+                name: 'Ing. Carlos López',
+                careers: ['mecatronica'],
+                status: 'active'
             }
         };
 
+        // Teachers data organized by career
         let teachers = {
             software: [
                 { 
                     id: 1, 
-                    name: 'Dr. Ana García', 
-                    email: 'ana.garcia@universidad.edu', 
+                    name: 'Dra. Ana García', 
+                    email: 'docente.software@universidad.edu', 
                     specialty: 'Desarrollo Web', 
                     status: 'Activo',
                     phone: '+1234567890',
@@ -882,9 +1061,9 @@
                 },
                 { 
                     id: 2, 
-                    name: 'Ing. Carlos López', 
-                    email: 'carlos.lopez@universidad.edu', 
-                    specialty: 'Base de Datos', 
+                    name: 'Dr. Juan Pérez', 
+                    email: 'docente.ambas@universidad.edu', 
+                    specialty: 'Arquitectura de Software', 
                     status: 'Activo',
                     phone: '+1234567891',
                     department: 'Ingeniería',
@@ -894,8 +1073,8 @@
             mecatronica: [
                 { 
                     id: 3, 
-                    name: 'Dr. María Rodríguez', 
-                    email: 'maria.rodriguez@universidad.edu', 
+                    name: 'Ing. Carlos López', 
+                    email: 'docente.mecatronica@universidad.edu', 
                     specialty: 'Automatización', 
                     status: 'Activo',
                     phone: '+1234567892',
@@ -904,8 +1083,8 @@
                 },
                 { 
                     id: 4, 
-                    name: 'Ing. Pedro Martínez', 
-                    email: 'pedro.martinez@universidad.edu', 
+                    name: 'Dr. Juan Pérez', 
+                    email: 'docente.ambas@universidad.edu', 
                     specialty: 'Robótica', 
                     status: 'Activo',
                     phone: '+1234567893',
@@ -915,8 +1094,9 @@
             ]
         };
 
+        // Activities organized by teacher email
         let activities = {
-            'ana.garcia@universidad.edu': [
+            'docente.software@universidad.edu': [
                 { 
                     id: 1, 
                     title: 'Actualización Plan de Estudios', 
@@ -926,7 +1106,8 @@
                     completed: false,
                     category: 'Académica',
                     status: 'pending',
-                    createdDate: '2024-01-15'
+                    createdDate: '2024-01-15',
+                    career: 'software'
                 },
                 { 
                     id: 2, 
@@ -937,22 +1118,126 @@
                     completed: true,
                     category: 'Capacitación',
                     status: 'completed',
-                    createdDate: '2024-01-10'
+                    createdDate: '2024-01-10',
+                    career: 'software'
                 }
             ],
-            'carlos.lopez@universidad.edu': [
+            'docente.ambas@universidad.edu': [
                 { 
                     id: 3, 
-                    title: 'Migración Base de Datos', 
-                    description: 'Actualizar sistema del laboratorio', 
+                    title: 'Proyecto Interdisciplinario', 
+                    description: 'Coordinar proyecto entre carreras', 
+                    deadline: '2024-03-15', 
+                    priority: 'alta', 
+                    completed: false,
+                    category: 'Académica',
+                    status: 'progress',
+                    createdDate: '2024-01-20',
+                    career: 'software'
+                },
+                { 
+                    id: 4, 
+                    title: 'Investigación Robótica', 
+                    description: 'Desarrollar prototipo robótico', 
+                    deadline: '2024-04-10', 
+                    priority: 'media', 
+                    completed: false,
+                    category: 'Investigación',
+                    status: 'pending',
+                    createdDate: '2024-01-25',
+                    career: 'mecatronica'
+                }
+            ],
+            'docente.mecatronica@universidad.edu': [
+                { 
+                    id: 5, 
+                    title: 'Mantenimiento Laboratorio', 
+                    description: 'Actualizar equipos del laboratorio', 
                     deadline: '2024-02-20', 
                     priority: 'alta', 
                     completed: false,
                     category: 'Administrativa',
                     status: 'progress',
-                    createdDate: '2024-01-20'
+                    createdDate: '2024-01-18',
+                    career: 'mecatronica'
                 }
             ]
+        };
+
+        // Enhanced Permission system with career-specific roles
+        const permissions = {
+            // Super Admin - Administrador General (acceso total a ambas carreras)
+            super_admin: {
+                canManageUsers: true,           // Solo él puede crear otros administradores
+                canManageTeachers: true,
+                canManageActivities: true,
+                canViewReports: true,
+                canExport: true,
+                canAccessAllCareers: true,
+                canCreateAdmins: true,          // Exclusivo del super admin
+                canDeleteUsers: true,
+                canViewAllData: true
+            },
+            // Administradores por carrera (creados solo por super admin)
+            admin_software: {
+                canManageUsers: false,          // No pueden crear otros admins
+                canManageTeachers: true,        // Pueden gestionar docentes de su carrera
+                canManageActivities: true,      // Pueden crear/editar actividades
+                canViewReports: true,
+                canExport: true,
+                canAccessAllCareers: false,     // Solo su carrera asignada
+                canCreateTeachers: true,        // Pueden crear docentes
+                canCreateAssistants: true,      // Pueden crear auxiliares
+                restrictedToCareers: ['software']
+            },
+            admin_mecatronica: {
+                canManageUsers: false,
+                canManageTeachers: true,
+                canManageActivities: true,
+                canViewReports: true,
+                canExport: true,
+                canAccessAllCareers: false,
+                canCreateTeachers: true,
+                canCreateAssistants: true,
+                restrictedToCareers: ['mecatronica']
+            },
+            // Profesores auxiliares por carrera
+            assistant_software: {
+                canManageUsers: false,
+                canManageTeachers: true,        // Pueden editar/eliminar docentes
+                canManageActivities: false,     // NO pueden crear actividades
+                canViewReports: true,
+                canExport: false,
+                canAccessAllCareers: false,
+                canMarkComplete: true,          // Pueden marcar actividades como completas
+                canEditTeachers: true,
+                canDeleteTeachers: true,
+                restrictedToCareers: ['software']
+            },
+            assistant_mecatronica: {
+                canManageUsers: false,
+                canManageTeachers: true,
+                canManageActivities: false,
+                canViewReports: true,
+                canExport: false,
+                canAccessAllCareers: false,
+                canMarkComplete: true,
+                canEditTeachers: true,
+                canDeleteTeachers: true,
+                restrictedToCareers: ['mecatronica']
+            },
+            // Docentes (solo visualización de sus actividades)
+            teacher: {
+                canManageUsers: false,
+                canManageTeachers: false,
+                canManageActivities: false,     // NO pueden crear/editar actividades
+                canViewReports: false,          // NO pueden ver reportes generales
+                canExport: false,
+                canAccessAllCareers: false,
+                canViewOwnActivities: true,     // Solo sus propias actividades
+                canViewOwnProgress: true,       // Solo su propio progreso
+                restrictedToCareers: []         // Se define por usuario individual
+            }
         };
 
         // Initialize app
@@ -970,6 +1255,7 @@
 
         function setupEventListeners() {
             document.getElementById('loginForm').addEventListener('submit', handleLogin);
+            document.getElementById('addUserForm').addEventListener('submit', handleAddUser);
             document.getElementById('addTeacherForm').addEventListener('submit', handleAddTeacher);
             document.getElementById('addActivityForm').addEventListener('submit', handleAddActivity);
             document.getElementById('globalSearch').addEventListener('input', handleGlobalSearch);
@@ -987,14 +1273,9 @@
                 db = firebase.firestore();
                 isFirestoreConnected = true;
 
-                // Test connection
                 await db.collection('test').limit(1).get();
-
                 updateFirestoreStatus('connected', 'Conectado');
-                
-                // Sync data to Firestore
                 await syncToFirestore();
-                
                 showNotification('¡Firestore conectado automáticamente!', 'success');
 
             } catch (error) {
@@ -1009,17 +1290,14 @@
             if (!isFirestoreConnected || !db) return;
 
             try {
-                // Sync users
                 for (const [email, userData] of Object.entries(users)) {
                     await db.collection('users').doc(email).set(userData);
                 }
 
-                // Sync teachers
                 for (const [career, teacherList] of Object.entries(teachers)) {
                     await db.collection('teachers').doc(career).set({ teachers: teacherList });
                 }
 
-                // Sync activities
                 for (const [email, activityList] of Object.entries(activities)) {
                     await db.collection('activities').doc(email).set({ activities: activityList });
                 }
@@ -1034,7 +1312,6 @@
             if (!isFirestoreConnected || !db) return;
 
             try {
-                // Load users
                 const usersSnapshot = await db.collection('users').get();
                 if (!usersSnapshot.empty) {
                     users = {};
@@ -1043,7 +1320,6 @@
                     });
                 }
 
-                // Load teachers
                 const teachersSnapshot = await db.collection('teachers').get();
                 if (!teachersSnapshot.empty) {
                     teachers = {};
@@ -1052,7 +1328,6 @@
                     });
                 }
 
-                // Load activities
                 const activitiesSnapshot = await db.collection('activities').get();
                 if (!activitiesSnapshot.empty) {
                     activities = {};
@@ -1093,7 +1368,7 @@
             textElement.textContent = message;
         }
 
-        // Authentication functions
+        // Authentication and role management
         function checkAuthStatus() {
             const savedUser = localStorage.getItem('currentUser');
             if (savedUser) {
@@ -1110,7 +1385,6 @@
             const email = document.getElementById('loginEmail').value.trim();
             const password = document.getElementById('loginPassword').value;
 
-            // Load latest user data from Firestore
             if (isFirestoreConnected) {
                 await loadFromFirestore();
             }
@@ -1127,15 +1401,22 @@
                 return;
             }
 
+            if (user.status !== 'active') {
+                showNotification('Usuario inactivo', 'error');
+                return;
+            }
+
             currentUser = {
                 email: email,
                 name: user.name,
-                role: user.role
+                role: user.role,
+                careers: user.careers || [],
+                permissions: permissions[user.role] || {}
             };
 
             localStorage.setItem('currentUser', JSON.stringify(currentUser));
             showMainApp();
-            showNotification('¡Bienvenido!', 'success');
+            showNotification(`¡Bienvenido ${user.name}!`, 'success');
         }
 
         function logout() {
@@ -1160,20 +1441,210 @@
             document.getElementById('loginScreen').classList.add('hidden');
             document.getElementById('mainApp').classList.remove('hidden');
             
+            updateUserInterface();
+            renderCareerOptions();
+        }
+
+        function updateUserInterface() {
             document.getElementById('userName').textContent = currentUser.name;
-            document.getElementById('userRole').textContent = currentUser.role === 'admin' ? 'Administrador' : 'Docente';
             
-            updateUIForRole();
+            // Update role badge
+            const roleBadge = document.getElementById('userRoleBadge');
+            const roleNames = {
+                'super_admin': 'SUPER ADMIN',
+                'admin_software': 'ADMIN SOFTWARE',
+                'admin_mecatronica': 'ADMIN MECATRÓNICA',
+                'assistant_software': 'AUXILIAR SOFTWARE',
+                'assistant_mecatronica': 'AUXILIAR MECATRÓNICA',
+                'teacher': 'DOCENTE'
+            };
+            
+            const roleClasses = {
+                'super_admin': 'role-super-admin',
+                'admin_software': 'role-admin-software',
+                'admin_mecatronica': 'role-admin-mecatronica',
+                'assistant_software': 'role-assistant',
+                'assistant_mecatronica': 'role-assistant',
+                'teacher': 'role-teacher'
+            };
+            
+            roleBadge.textContent = roleNames[currentUser.role] || 'USUARIO';
+            roleBadge.className = `role-badge ${roleClasses[currentUser.role] || ''}`;
+            
+            // Update careers info
+            const careerNames = {
+                'software': 'Ing. Software',
+                'mecatronica': 'Ing. Mecatrónica'
+            };
+            
+            const userCareersText = currentUser.careers.map(c => careerNames[c]).join(', ');
+            document.getElementById('userCareers').textContent = userCareersText || 'Sin carreras asignadas';
         }
 
-        function updateUIForRole() {
-            const isAdmin = currentUser.role === 'admin';
+        // Enhanced career options rendering with role-based access
+        function renderCareerOptions() {
+            const careerOptionsContainer = document.getElementById('careerOptions');
+            let optionsHTML = '';
+
+            // SOLO SUPER ADMIN: Gestión de usuarios (crear otros administradores)
+            if (currentUser.permissions.canCreateAdmins) {
+                optionsHTML += `
+                    <div class="glass-effect rounded-xl p-6 cursor-pointer hover:shadow-xl transition-all" onclick="showUserManagement()">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                                <span class="text-2xl">👑</span>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900">Gestión de Usuarios</h3>
+                                <p class="text-gray-600 text-sm">Solo Super Admin - Crear administradores</p>
+                                <div class="mt-1">
+                                    <span class="role-badge role-super-admin">ACCESO EXCLUSIVO</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Mostrar carreras según asignación del usuario
+            const availableCareers = getUserAvailableCareers();
             
-            document.getElementById('addTeacherBtn').style.display = isAdmin ? 'block' : 'none';
-            document.getElementById('addActivityBtn').style.display = isAdmin ? 'block' : 'none';
+            availableCareers.forEach(career => {
+                const careerInfo = getCareerInfo(career);
+                const accessLevel = getUserAccessLevel(career);
+                
+                optionsHTML += `
+                    <div class="glass-effect rounded-xl p-6 cursor-pointer hover:shadow-xl transition-all ${careerInfo.cssClass}" onclick="selectCareer('${career}')">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 ${careerInfo.bgColor} rounded-lg flex items-center justify-center">
+                                <span class="text-2xl">${careerInfo.icon}</span>
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="text-lg font-semibold text-gray-900">${careerInfo.title}</h3>
+                                <p class="text-gray-600 text-sm">${accessLevel.description}</p>
+                                <div class="mt-2 flex items-center space-x-2">
+                                    <span class="role-badge ${accessLevel.badgeClass}">${accessLevel.label}</span>
+                                    ${getUserCareerStats(career)}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            // Si no hay carreras disponibles
+            if (availableCareers.length === 0) {
+                optionsHTML += `
+                    <div class="glass-effect rounded-xl p-6 text-center">
+                        <div class="text-gray-400 text-4xl mb-4">🚫</div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2">Sin Carreras Asignadas</h3>
+                        <p class="text-gray-600 text-sm">Contacta al administrador para obtener acceso</p>
+                    </div>
+                `;
+            }
+
+            careerOptionsContainer.innerHTML = optionsHTML;
         }
 
-        // Career and navigation functions
+        // Obtener carreras disponibles para el usuario actual
+        function getUserAvailableCareers() {
+            if (currentUser.permissions.canAccessAllCareers) {
+                return ['software', 'mecatronica'];
+            }
+            return currentUser.careers || [];
+        }
+
+        // Obtener información de la carrera
+        function getCareerInfo(career) {
+            const careerData = {
+                software: {
+                    title: 'Ingeniería en Software',
+                    icon: '💻',
+                    bgColor: 'bg-blue-100',
+                    cssClass: 'career-software'
+                },
+                mecatronica: {
+                    title: 'Ingeniería en Manufactura y Mecatrónica',
+                    icon: '⚙️',
+                    bgColor: 'bg-green-100',
+                    cssClass: 'career-mecatronica'
+                }
+            };
+            return careerData[career] || {};
+        }
+
+        // Obtener nivel de acceso del usuario a una carrera
+        function getUserAccessLevel(career) {
+            if (currentUser.permissions.canAccessAllCareers) {
+                return {
+                    label: 'ACCESO TOTAL',
+                    description: 'Gestión completa de docentes y actividades',
+                    badgeClass: 'role-super-admin'
+                };
+            }
+            
+            if (currentUser.role.includes('admin_')) {
+                return {
+                    label: 'ADMINISTRADOR',
+                    description: 'Crear docentes, auxiliares y actividades',
+                    badgeClass: career === 'software' ? 'role-admin-software' : 'role-admin-mecatronica'
+                };
+            }
+            
+            if (currentUser.role.includes('assistant_')) {
+                return {
+                    label: 'PROFESOR AUXILIAR',
+                    description: 'Gestionar docentes y marcar actividades',
+                    badgeClass: 'role-assistant'
+                };
+            }
+            
+            if (currentUser.role === 'teacher') {
+                return {
+                    label: 'DOCENTE',
+                    description: 'Ver solo mis actividades y progreso',
+                    badgeClass: 'role-teacher'
+                };
+            }
+            
+            return {
+                label: 'USUARIO',
+                description: 'Acceso limitado',
+                badgeClass: 'role-teacher'
+            };
+        }
+
+        // Obtener estadísticas rápidas de la carrera para el usuario
+        function getUserCareerStats(career) {
+            if (currentUser.role === 'teacher') {
+                const myActivities = getTeacherActivities(currentUser.email, career);
+                const completed = myActivities.filter(a => a.completed).length;
+                return `<span class="text-xs text-gray-500">${completed}/${myActivities.length} completadas</span>`;
+            }
+            
+            if (currentUser.permissions.canViewReports) {
+                const careerTeachers = teachers[career] || [];
+                const teacherCount = careerTeachers.length;
+                return `<span class="text-xs text-gray-500">${teacherCount} docentes</span>`;
+            }
+            
+            return '';
+        }
+
+        // Navigation functions
+        function showUserManagement() {
+            document.getElementById('careerSelection').classList.add('hidden');
+            document.getElementById('userManagement').classList.remove('hidden');
+            renderUsersTable();
+        }
+
+        function goToCareerSelection() {
+            document.getElementById('userManagement').classList.add('hidden');
+            document.getElementById('dashboard').classList.add('hidden');
+            document.getElementById('careerSelection').classList.remove('hidden');
+            currentCareer = '';
+        }
+
         function selectCareer(career) {
             currentCareer = career;
             
@@ -1188,6 +1659,7 @@
             document.getElementById('careerSelection').classList.add('hidden');
             document.getElementById('dashboard').classList.remove('hidden');
             
+            setupNavigationTabs();
             showTab('dashboard');
         }
 
@@ -1197,7 +1669,90 @@
             currentCareer = '';
         }
 
+        function setupNavigationTabs() {
+            const tabsContainer = document.getElementById('navigationTabs');
+            let tabsHTML = '';
+
+            // Dashboard tab - visible para todos
+            tabsHTML += `
+                <button id="dashboardTab" class="tab-button flex-1 px-8 py-5 text-sm font-semibold transition-all" onclick="showTab('dashboard')">
+                    <div class="flex items-center justify-center space-x-2">
+                        <span>📊</span>
+                        <span>Dashboard</span>
+                    </div>
+                </button>
+            `;
+
+            // Teachers tab - visible para admins y auxiliares (NO para docentes)
+            if (currentUser.permissions.canManageTeachers || currentUser.permissions.canViewReports) {
+                tabsHTML += `
+                    <button id="teachersTab" class="tab-button flex-1 px-8 py-5 text-sm font-semibold transition-all" onclick="showTab('teachers')">
+                        <div class="flex items-center justify-center space-x-2">
+                            <span>👥</span>
+                            <span>Docentes</span>
+                        </div>
+                    </button>
+                `;
+            }
+
+            // Activities tab - visible para todos (con diferentes permisos)
+            tabsHTML += `
+                <button id="activitiesTab" class="tab-button flex-1 px-8 py-5 text-sm font-semibold transition-all" onclick="showTab('activities')">
+                    <div class="flex items-center justify-center space-x-2">
+                        <span>📋</span>
+                        <span>${currentUser.role === 'teacher' ? 'Mis Actividades' : 'Actividades'}</span>
+                    </div>
+                </button>
+            `;
+
+            // Kanban tab - solo para admins y auxiliares (NO para docentes)
+            if (currentUser.permissions.canViewReports) {
+                tabsHTML += `
+                    <button id="kanbanTab" class="tab-button flex-1 px-8 py-5 text-sm font-semibold transition-all" onclick="showTab('kanban')">
+                        <div class="flex items-center justify-center space-x-2">
+                            <span>📌</span>
+                            <span>Kanban</span>
+                        </div>
+                    </button>
+                `;
+            }
+
+            // Calendar tab - visible para todos
+            tabsHTML += `
+                <button id="calendarTab" class="tab-button flex-1 px-8 py-5 text-sm font-semibold transition-all" onclick="showTab('calendar')">
+                    <div class="flex items-center justify-center space-x-2">
+                        <span>📅</span>
+                        <span>Calendario</span>
+                    </div>
+                </button>
+            `;
+
+            // Reports tab - solo para admins y auxiliares (NO para docentes)
+            if (currentUser.permissions.canViewReports) {
+                tabsHTML += `
+                    <button id="reportsTab" class="tab-button flex-1 px-8 py-5 text-sm font-semibold transition-all" onclick="showTab('reports')">
+                        <div class="flex items-center justify-center space-x-2">
+                            <span>📈</span>
+                            <span>Reportes</span>
+                        </div>
+                    </button>
+                `;
+            }
+
+            tabsContainer.innerHTML = tabsHTML;
+
+            // Update button visibility based on permissions
+            document.getElementById('exportExcelBtn').classList.toggle('hidden', !currentUser.permissions.canExport);
+            document.getElementById('exportPdfBtn').classList.toggle('hidden', !currentUser.permissions.canExport);
+        }
+
         function showTab(tab) {
+            // Check permissions
+            if (!hasTabPermission(tab)) {
+                showTab('permissionDenied');
+                return;
+            }
+
             // Hide all tab contents
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
             
@@ -1212,8 +1767,10 @@
             
             // Add active class to selected tab
             const activeTab = document.getElementById(tab + 'Tab');
-            activeTab.classList.add('tab-active', 'text-white');
-            activeTab.classList.remove('text-gray-700');
+            if (activeTab) {
+                activeTab.classList.add('tab-active', 'text-white');
+                activeTab.classList.remove('text-gray-700');
+            }
             
             currentTab = tab;
             
@@ -1226,19 +1783,154 @@
             if (tab === 'reports') renderReports();
         }
 
-        // Render functions
+        // Enhanced permission validation functions
+        function hasTabPermission(tab) {
+            switch (tab) {
+                case 'dashboard':
+                    return true; // Todos pueden ver dashboard básico
+                case 'teachers':
+                    // Solo admins y auxiliares pueden gestionar docentes
+                    return currentUser.permissions.canManageTeachers || currentUser.permissions.canViewReports;
+                case 'activities':
+                    return true; // Todos pueden ver actividades (filtradas por rol)
+                case 'kanban':
+                case 'reports':
+                    // Solo roles administrativos pueden ver reportes completos
+                    return currentUser.permissions.canViewReports;
+                case 'calendar':
+                    return true; // Todos pueden ver calendario
+                default:
+                    return false;
+            }
+        }
+
+        // Validar si el usuario puede acceder a una carrera específica
+        function canAccessCareer(career) {
+            // Super admin puede acceder a todo
+            if (currentUser.permissions.canAccessAllCareers) {
+                return true;
+            }
+            
+            // Verificar si la carrera está en las carreras asignadas al usuario
+            return currentUser.careers.includes(career);
+        }
+
+        // Validar si el usuario puede realizar una acción específica en una carrera
+        function canPerformAction(action, career = null) {
+            // Verificar permiso básico
+            if (!currentUser.permissions[action]) {
+                return false;
+            }
+            
+            // Si se especifica carrera, verificar acceso a esa carrera
+            if (career && !canAccessCareer(career)) {
+                return false;
+            }
+            
+            // Verificar restricciones por carrera del rol
+            if (currentUser.permissions.restrictedToCareers && 
+                currentUser.permissions.restrictedToCareers.length > 0) {
+                if (career && !currentUser.permissions.restrictedToCareers.includes(career)) {
+                    return false;
+                }
+            }
+            
+            return true;
+        }
+
+        // Validar si el usuario puede gestionar a otro usuario
+        function canManageUser(targetUserRole, targetUserCareers = []) {
+            // Solo super admin puede crear otros administradores
+            if (targetUserRole.includes('admin') && !currentUser.permissions.canCreateAdmins) {
+                return false;
+            }
+            
+            // Admins pueden crear docentes y auxiliares solo en sus carreras
+            if (currentUser.role.includes('admin_') && !currentUser.permissions.canCreateAdmins) {
+                const userCareer = currentUser.role.split('_')[1]; // software o mecatronica
+                return targetUserCareers.some(career => career === userCareer);
+            }
+            
+            return currentUser.permissions.canManageUsers;
+        }
+
+        // User management functions (Super Admin only)
+        function renderUsersTable() {
+            const tbody = document.getElementById('usersTableBody');
+            
+            tbody.innerHTML = Object.entries(users).map(([email, user]) => {
+                const roleNames = {
+                    'super_admin': 'Super Admin',
+                    'admin_software': 'Admin Software',
+                    'admin_mecatronica': 'Admin Mecatrónica',
+                    'assistant_software': 'Auxiliar Software',
+                    'assistant_mecatronica': 'Auxiliar Mecatrónica',
+                    'teacher': 'Docente'
+                };
+
+                const careerNames = {
+                    'software': 'Software',
+                    'mecatronica': 'Mecatrónica'
+                };
+
+                const userCareers = (user.careers || []).map(c => careerNames[c]).join(', ');
+
+                return `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center mr-3">
+                                    <span class="text-indigo-600 text-sm font-medium">${user.name.charAt(0)}</span>
+                                </div>
+                                <span class="text-sm font-medium text-gray-900">${user.name}</span>
+                            </div>
+                        </td>
+                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-600">${email}</td>
+                        <td class="px-4 py-4 whitespace-nowrap">
+                            <span class="role-badge ${getRoleClass(user.role)}">${roleNames[user.role] || 'Usuario'}</span>
+                        </td>
+                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-600">${userCareers || 'Ninguna'}</td>
+                        <td class="px-4 py-4 whitespace-nowrap">
+                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${user.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                                ${user.status === 'active' ? 'Activo' : 'Inactivo'}
+                            </span>
+                        </td>
+                        <td class="px-4 py-4 whitespace-nowrap text-sm font-medium">
+                            <button onclick="editUser('${email}')" class="text-indigo-600 hover:text-indigo-900 mr-3">Editar</button>
+                            <button onclick="toggleUserStatus('${email}')" class="text-${user.status === 'active' ? 'red' : 'green'}-600 hover:text-${user.status === 'active' ? 'red' : 'green'}-900">
+                                ${user.status === 'active' ? 'Desactivar' : 'Activar'}
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function getRoleClass(role) {
+            const classes = {
+                'super_admin': 'role-super-admin',
+                'admin_software': 'role-admin-software',
+                'admin_mecatronica': 'role-admin-mecatronica',
+                'assistant_software': 'role-assistant',
+                'assistant_mecatronica': 'role-assistant',
+                'teacher': 'role-teacher'
+            };
+            return classes[role] || '';
+        }
+
+        // Render functions with permission checks
         async function renderDashboard() {
             if (isFirestoreConnected) {
                 await loadFromFirestore();
             }
 
-            const careerTeachers = teachers[currentCareer] || [];
+            const careerTeachers = getFilteredTeachers();
             let totalActivities = 0;
             let completedActivities = 0;
             let pendingActivities = 0;
             
             careerTeachers.forEach(teacher => {
-                const teacherActivities = activities[teacher.email] || [];
+                const teacherActivities = getFilteredActivities(teacher.email);
                 totalActivities += teacherActivities.length;
                 completedActivities += teacherActivities.filter(a => a.completed).length;
                 pendingActivities += teacherActivities.filter(a => !a.completed).length;
@@ -1249,110 +1941,129 @@
             document.getElementById('dashCompletedActivities').textContent = completedActivities;
             document.getElementById('dashPendingActivities').textContent = pendingActivities;
 
-            // Render charts
-            renderTeacherProgressChart();
-            renderPriorityChart();
-            renderRecentActivities();
+            if (currentUser.permissions.canViewReports) {
+                renderTeacherProgressChart();
+                renderPriorityChart();
+                renderRecentActivities();
+            }
         }
 
-        function renderTeacherProgressChart() {
-            const ctx = document.getElementById('teacherProgressChart').getContext('2d');
-            const careerTeachers = teachers[currentCareer] || [];
+        // Enhanced teacher filtering based on role and career restrictions
+        function getFilteredTeachers() {
+            // Docentes solo se ven a sí mismos
+            if (currentUser.role === 'teacher') {
+                return teachers[currentCareer]?.filter(t => t.email === currentUser.email) || [];
+            }
             
-            const data = careerTeachers.map(teacher => {
-                const teacherActivities = activities[teacher.email] || [];
-                const completed = teacherActivities.filter(a => a.completed).length;
-                const total = teacherActivities.length;
-                return total > 0 ? Math.round((completed / total) * 100) : 0;
-            });
-
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: careerTeachers.map(t => t.name.split(' ')[0]),
-                    datasets: [{
-                        label: 'Progreso (%)',
-                        data: data,
-                        backgroundColor: 'rgba(102, 126, 234, 0.8)',
-                        borderColor: 'rgba(102, 126, 234, 1)',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            max: 100
-                        }
-                    }
+            // Super admin ve todos los docentes de la carrera seleccionada
+            if (currentUser.permissions.canAccessAllCareers) {
+                return teachers[currentCareer] || [];
+            }
+            
+            // Admins y auxiliares ven solo docentes de sus carreras asignadas
+            if (currentUser.permissions.restrictedToCareers) {
+                if (!currentUser.permissions.restrictedToCareers.includes(currentCareer)) {
+                    return []; // No puede ver docentes de esta carrera
                 }
-            });
+            }
+            
+            // Verificar que el usuario tenga acceso a la carrera actual
+            if (!canAccessCareer(currentCareer)) {
+                return [];
+            }
+            
+            return teachers[currentCareer] || [];
         }
 
-        function renderPriorityChart() {
-            const ctx = document.getElementById('priorityChart').getContext('2d');
-            const careerTeachers = teachers[currentCareer] || [];
+        // Filtrar docentes por carrera específica (para docentes que enseñan en ambas)
+        function getTeachersByCareer(career) {
+            if (!canAccessCareer(career)) {
+                return [];
+            }
             
-            let alta = 0, media = 0, baja = 0;
+            const careerTeachers = teachers[career] || [];
             
-            careerTeachers.forEach(teacher => {
-                const teacherActivities = activities[teacher.email] || [];
-                teacherActivities.forEach(activity => {
-                    if (activity.priority === 'alta') alta++;
-                    else if (activity.priority === 'media') media++;
-                    else baja++;
+            // Si es docente, solo retornar si está asignado a esa carrera
+            if (currentUser.role === 'teacher') {
+                return careerTeachers.filter(t => t.email === currentUser.email);
+            }
+            
+            return careerTeachers;
+        }
+
+        // Enhanced activity filtering with strict role-based access
+        function getFilteredActivities(teacherEmail = null) {
+            // DOCENTES: Solo pueden ver sus propias actividades
+            if (currentUser.role === 'teacher') {
+                const userActivities = activities[currentUser.email] || [];
+                // Filtrar por carrera actual si la actividad tiene carrera asignada
+                return userActivities.filter(a => {
+                    // Si la actividad no tiene carrera asignada, mostrarla
+                    if (!a.career) return true;
+                    // Si tiene carrera, debe coincidir con la carrera actual
+                    return a.career === currentCareer;
                 });
-            });
-
-            new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Alta', 'Media', 'Baja'],
-                    datasets: [{
-                        data: [alta, media, baja],
-                        backgroundColor: [
-                            'rgba(239, 68, 68, 0.8)',
-                            'rgba(245, 158, 11, 0.8)',
-                            'rgba(16, 185, 129, 0.8)'
-                        ]
-                    }]
-                },
-                options: {
-                    responsive: true
+            }
+            
+            // Si se solicita un docente específico
+            if (teacherEmail) {
+                // Verificar que el usuario tenga permisos para ver actividades de otros
+                if (!currentUser.permissions.canViewReports && !currentUser.permissions.canManageActivities) {
+                    return [];
                 }
-            });
-        }
-
-        function renderRecentActivities() {
-            const careerTeachers = teachers[currentCareer] || [];
+                
+                const teacherActivities = activities[teacherEmail] || [];
+                return teacherActivities.filter(a => !a.career || a.career === currentCareer);
+            }
+            
+            // ADMINS Y AUXILIARES: Ver actividades según sus restricciones de carrera
             let allActivities = [];
+            const careerTeachers = getFilteredTeachers(); // Ya aplica restricciones de carrera
             
             careerTeachers.forEach(teacher => {
                 const teacherActivities = activities[teacher.email] || [];
                 teacherActivities.forEach(activity => {
-                    allActivities.push({
-                        ...activity,
-                        teacherName: teacher.name
-                    });
+                    // Verificar que la actividad pertenezca a la carrera actual
+                    if (!activity.career || activity.career === currentCareer) {
+                        allActivities.push({
+                            ...activity,
+                            teacherName: teacher.name,
+                            teacherEmail: teacher.email
+                        });
+                    }
                 });
             });
             
-            // Sort by creation date (most recent first)
-            allActivities.sort((a, b) => new Date(b.createdDate) - new Date(a.createdDate));
+            return allActivities;
+        }
+
+        // Obtener actividades de un docente específico con validación de permisos
+        function getTeacherActivities(teacherEmail, career = null) {
+            const targetCareer = career || currentCareer;
             
-            const recentList = document.getElementById('recentActivitiesList');
-            recentList.innerHTML = allActivities.slice(0, 5).map(activity => `
-                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div>
-                        <h5 class="font-medium text-gray-900">${activity.title}</h5>
-                        <p class="text-sm text-gray-600">Asignado a: ${activity.teacherName}</p>
-                    </div>
-                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full priority-${activity.priority}">
-                        ${activity.priority.toUpperCase()}
-                    </span>
-                </div>
-            `).join('');
+            // Docentes solo pueden ver sus propias actividades
+            if (currentUser.role === 'teacher' && teacherEmail !== currentUser.email) {
+                return [];
+            }
+            
+            // Verificar acceso a la carrera
+            if (!canAccessCareer(targetCareer)) {
+                return [];
+            }
+            
+            const teacherActivities = activities[teacherEmail] || [];
+            return teacherActivities.filter(a => !a.career || a.career === targetCareer);
+        }
+
+        // Verificar si el usuario puede ver el progreso de un docente específico
+        function canViewTeacherProgress(teacherEmail) {
+            // Docentes solo pueden ver su propio progreso
+            if (currentUser.role === 'teacher') {
+                return teacherEmail === currentUser.email;
+            }
+            
+            // Admins y auxiliares pueden ver progreso de docentes en sus carreras
+            return currentUser.permissions.canViewReports || currentUser.permissions.canManageTeachers;
         }
 
         async function renderTeachers() {
@@ -1361,7 +2072,7 @@
             }
 
             const tbody = document.getElementById('teachersTableBody');
-            let careerTeachers = teachers[currentCareer] || [];
+            let careerTeachers = getFilteredTeachers();
             
             // Apply filters
             const statusFilter = document.getElementById('teacherStatusFilter').value;
@@ -1380,7 +2091,7 @@
             }
             
             tbody.innerHTML = careerTeachers.map(teacher => {
-                const teacherActivities = activities[teacher.email] || [];
+                const teacherActivities = getFilteredActivities(teacher.email);
                 const completed = teacherActivities.filter(a => a.completed).length;
                 const total = teacherActivities.length;
                 const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
@@ -1414,12 +2125,16 @@
                             </div>
                         </td>
                         <td class="px-4 py-4 whitespace-nowrap text-sm font-medium">
-                            <button onclick="editTeacher(${teacher.id})" class="text-indigo-600 hover:text-indigo-900 mr-3">Editar</button>
-                            <button onclick="deleteTeacher(${teacher.id})" class="text-red-600 hover:text-red-900">Eliminar</button>
+                            ${getTeacherActionButtons(teacher)}
                         </td>
                     </tr>
                 `;
             }).join('');
+
+            // Show/hide add teacher button based on permissions
+            const canAddTeacher = currentUser.permissions.canManageTeachers || 
+                                 currentUser.permissions.canCreateTeachers;
+            document.getElementById('addTeacherBtn').classList.toggle('hidden', !canAddTeacher);
         }
 
         async function renderActivities() {
@@ -1428,19 +2143,7 @@
             }
 
             const grid = document.getElementById('activitiesGrid');
-            const careerTeachers = teachers[currentCareer] || [];
-            let allActivities = [];
-            
-            careerTeachers.forEach(teacher => {
-                const teacherActivities = activities[teacher.email] || [];
-                teacherActivities.forEach(activity => {
-                    allActivities.push({
-                        ...activity,
-                        teacherName: teacher.name,
-                        teacherEmail: teacher.email
-                    });
-                });
-            });
+            let allActivities = getFilteredActivities();
             
             // Apply filters
             const priorityFilter = document.getElementById('activityPriorityFilter').value;
@@ -1463,7 +2166,7 @@
                     <div class="col-span-full text-center py-12">
                         <div class="text-gray-400 text-6xl mb-4">📋</div>
                         <h3 class="text-lg font-medium text-gray-900 mb-2">No hay actividades</h3>
-                        <p class="text-gray-500">Comienza creando una nueva actividad</p>
+                        <p class="text-gray-500">No se encontraron actividades con los filtros aplicados</p>
                     </div>
                 `;
                 return;
@@ -1481,10 +2184,12 @@
                         <p class="text-gray-600 text-sm">${activity.description}</p>
                     </div>
                     
-                    <div class="bg-blue-50 rounded-xl p-4 mb-4">
-                        <p class="text-blue-800 font-semibold text-sm">Asignado a: ${activity.teacherName}</p>
-                        <p class="text-blue-600 text-xs">Categoría: ${activity.category || 'General'}</p>
-                    </div>
+                    ${activity.teacherName ? `
+                        <div class="bg-blue-50 rounded-xl p-4 mb-4">
+                            <p class="text-blue-800 font-semibold text-sm">Asignado a: ${activity.teacherName}</p>
+                            <p class="text-blue-600 text-xs">Categoría: ${activity.category || 'General'}</p>
+                        </div>
+                    ` : ''}
                     
                     <div class="flex items-center justify-between mb-4">
                         <span class="text-gray-700 font-medium">Fecha límite:</span>
@@ -1492,23 +2197,191 @@
                     </div>
                     
                     <div class="flex items-center justify-between">
-                        <div class="flex items-center space-x-2">
-                            <input type="checkbox" ${activity.completed ? 'checked' : ''} 
-                                   onchange="toggleActivity('${activity.teacherEmail}', ${activity.id})" 
-                                   class="w-4 h-4 text-green-600 rounded">
-                            <span class="text-sm text-gray-700">Completada</span>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <button onclick="editActivity('${activity.teacherEmail}', ${activity.id})" 
-                                    class="text-indigo-600 hover:text-indigo-800 text-sm">
-                                ✏️ Editar
-                            </button>
-                            <button onclick="deleteActivity('${activity.teacherEmail}', ${activity.id})" 
-                                    class="text-red-600 hover:text-red-800 text-sm">
-                                🗑️ Eliminar
-                            </button>
-                        </div>
+                        ${canMarkActivityComplete(activity) ? `
+                            <div class="flex items-center space-x-2">
+                                <input type="checkbox" ${activity.completed ? 'checked' : ''} 
+                                       onchange="toggleActivity('${activity.teacherEmail || currentUser.email}', ${activity.id})" 
+                                       class="w-4 h-4 text-green-600 rounded">
+                                <span class="text-sm text-gray-700">Completada</span>
+                            </div>
+                        ` : `
+                            <div class="flex items-center space-x-2">
+                                <span class="w-4 h-4 ${activity.completed ? 'text-green-600' : 'text-gray-400'}">
+                                    ${activity.completed ? '✅' : '⏳'}
+                                </span>
+                                <span class="text-sm text-gray-700">${activity.completed ? 'Completada' : 'Pendiente'}</span>
+                            </div>
+                        `}
+                        
+                        ${canEditActivity(activity) ? `
+                            <div class="flex items-center space-x-2">
+                                <button onclick="editActivity('${activity.teacherEmail || currentUser.email}', ${activity.id})" 
+                                        class="text-indigo-600 hover:text-indigo-800 text-sm">
+                                    ✏️ Editar
+                                </button>
+                                <button onclick="deleteActivity('${activity.teacherEmail || currentUser.email}', ${activity.id})" 
+                                        class="text-red-600 hover:text-red-800 text-sm">
+                                    🗑️ Eliminar
+                                </button>
+                            </div>
+                        ` : ''}
                     </div>
+                </div>
+            `).join('');
+
+            // Show/hide add activity button based on permissions (solo admins pueden crear actividades)
+            document.getElementById('addActivityBtn').classList.toggle('hidden', !currentUser.permissions.canManageActivities);
+        }
+
+        // Validar si el usuario puede marcar una actividad como completa
+        function canMarkActivityComplete(activity) {
+            // Docentes solo pueden marcar sus propias actividades
+            if (currentUser.role === 'teacher') {
+                return activity.teacherEmail === currentUser.email || !activity.teacherEmail;
+            }
+            
+            // Auxiliares pueden marcar actividades como completas
+            if (currentUser.permissions.canMarkComplete) {
+                return true;
+            }
+            
+            // Admins pueden marcar actividades
+            if (currentUser.permissions.canManageActivities) {
+                return true;
+            }
+            
+            return false;
+        }
+
+        // Validar si el usuario puede editar/eliminar una actividad
+        function canEditActivity(activity) {
+            // Solo admins pueden crear/editar/eliminar actividades
+            if (!currentUser.permissions.canManageActivities) {
+                return false;
+            }
+            
+            // Verificar acceso a la carrera de la actividad
+            if (activity.career && !canAccessCareer(activity.career)) {
+                return false;
+            }
+            
+            return true;
+        }
+
+        // Obtener botones de acción para docentes según permisos
+        function getTeacherActionButtons(teacher) {
+            let buttons = '';
+            
+            // Auxiliares pueden editar y eliminar docentes
+            if (currentUser.permissions.canEditTeachers || currentUser.permissions.canDeleteTeachers) {
+                if (currentUser.permissions.canEditTeachers || currentUser.permissions.canManageTeachers) {
+                    buttons += `<button onclick="editTeacher(${teacher.id})" class="text-indigo-600 hover:text-indigo-900 mr-3">Editar</button>`;
+                }
+                
+                if (currentUser.permissions.canDeleteTeachers || currentUser.permissions.canManageTeachers) {
+                    buttons += `<button onclick="deleteTeacher(${teacher.id})" class="text-red-600 hover:text-red-900">Eliminar</button>`;
+                }
+            }
+            
+            // Admins tienen acceso completo
+            if (currentUser.permissions.canManageTeachers && !buttons) {
+                buttons = `
+                    <button onclick="editTeacher(${teacher.id})" class="text-indigo-600 hover:text-indigo-900 mr-3">Editar</button>
+                    <button onclick="deleteTeacher(${teacher.id})" class="text-red-600 hover:text-red-900">Eliminar</button>
+                `;
+            }
+            
+            // Si no hay permisos, mostrar solo visualización
+            if (!buttons && currentUser.role === 'teacher') {
+                buttons = '<span class="text-gray-400 text-sm">Solo lectura</span>';
+            }
+            
+            return buttons;
+        }
+
+        // Continue with other render functions...
+        function renderTeacherProgressChart() {
+            const ctx = document.getElementById('teacherProgressChart').getContext('2d');
+            const careerTeachers = getFilteredTeachers();
+            
+            const data = careerTeachers.map(teacher => {
+                const teacherActivities = getFilteredActivities(teacher.email);
+                const completed = teacherActivities.filter(a => a.completed).length;
+                const total = teacherActivities.length;
+                return total > 0 ? Math.round((completed / total) * 100) : 0;
+            });
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: careerTeachers.map(t => t.name.split(' ')[0]),
+                    datasets: [{
+                        label: 'Progreso (%)',
+                        data: data,
+                        backgroundColor: 'rgba(102, 126, 234, 0.8)',
+                        borderColor: 'rgba(102, 126, 234, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderPriorityChart() {
+            const ctx = document.getElementById('priorityChart').getContext('2d');
+            const allActivities = getFilteredActivities();
+            
+            let alta = 0, media = 0, baja = 0;
+            
+            allActivities.forEach(activity => {
+                if (activity.priority === 'alta') alta++;
+                else if (activity.priority === 'media') media++;
+                else baja++;
+            });
+
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Alta', 'Media', 'Baja'],
+                    datasets: [{
+                        data: [alta, media, baja],
+                        backgroundColor: [
+                            'rgba(239, 68, 68, 0.8)',
+                            'rgba(245, 158, 11, 0.8)',
+                            'rgba(16, 185, 129, 0.8)'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true
+                }
+            });
+        }
+
+        function renderRecentActivities() {
+            const allActivities = getFilteredActivities();
+            
+            // Sort by creation date (most recent first)
+            allActivities.sort((a, b) => new Date(b.createdDate) - new Date(a.createdDate));
+            
+            const recentList = document.getElementById('recentActivitiesList');
+            recentList.innerHTML = allActivities.slice(0, 5).map(activity => `
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div>
+                        <h5 class="font-medium text-gray-900">${activity.title}</h5>
+                        ${activity.teacherName ? `<p class="text-sm text-gray-600">Asignado a: ${activity.teacherName}</p>` : ''}
+                    </div>
+                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full priority-${activity.priority}">
+                        ${activity.priority.toUpperCase()}
+                    </span>
                 </div>
             `).join('');
         }
@@ -1518,19 +2391,7 @@
                 await loadFromFirestore();
             }
 
-            const careerTeachers = teachers[currentCareer] || [];
-            let allActivities = [];
-            
-            careerTeachers.forEach(teacher => {
-                const teacherActivities = activities[teacher.email] || [];
-                teacherActivities.forEach(activity => {
-                    allActivities.push({
-                        ...activity,
-                        teacherName: teacher.name,
-                        teacherEmail: teacher.email
-                    });
-                });
-            });
+            const allActivities = getFilteredActivities();
 
             const pendingContainer = document.getElementById('kanbanPending');
             const progressContainer = document.getElementById('kanbanProgress');
@@ -1542,7 +2403,7 @@
 
             function renderKanbanCards(activities, container) {
                 container.innerHTML = activities.map(activity => `
-                    <div class="kanban-card" draggable="true" data-activity-id="${activity.id}" data-teacher-email="${activity.teacherEmail}">
+                    <div class="kanban-card" draggable="true" data-activity-id="${activity.id}" data-teacher-email="${activity.teacherEmail || currentUser.email}">
                         <div class="flex justify-between items-start mb-2">
                             <h5 class="font-semibold text-gray-900 text-sm">${activity.title}</h5>
                             <span class="inline-flex px-2 py-1 text-xs font-bold rounded priority-${activity.priority}">
@@ -1551,7 +2412,7 @@
                         </div>
                         <p class="text-gray-600 text-xs mb-3">${activity.description}</p>
                         <div class="flex justify-between items-center">
-                            <span class="text-xs text-gray-500">${activity.teacherName}</span>
+                            ${activity.teacherName ? `<span class="text-xs text-gray-500">${activity.teacherName}</span>` : ''}
                             <span class="text-xs text-gray-500">${activity.deadline}</span>
                         </div>
                     </div>
@@ -1562,8 +2423,10 @@
             renderKanbanCards(progressActivities, progressContainer);
             renderKanbanCards(completedActivities, completedContainer);
 
-            // Add drag and drop functionality
-            setupKanbanDragDrop();
+            // Add drag and drop functionality if user has permissions
+            if (currentUser.permissions.canMarkComplete || currentUser.permissions.canManageActivities) {
+                setupKanbanDragDrop();
+            }
         }
 
         function setupKanbanDragDrop() {
@@ -1602,7 +2465,7 @@
         }
 
         async function updateActivityStatus(teacherEmail, activityId, newStatus) {
-            const activity = activities[teacherEmail].find(a => a.id === activityId);
+            const activity = activities[teacherEmail]?.find(a => a.id === activityId);
             if (activity) {
                 if (newStatus === 'completed') {
                     activity.completed = true;
@@ -1636,19 +2499,7 @@
             const calendarDays = document.getElementById('calendarDays');
             calendarDays.innerHTML = '';
 
-            // Get all activities for the current career
-            const careerTeachers = teachers[currentCareer] || [];
-            let allActivities = [];
-            
-            careerTeachers.forEach(teacher => {
-                const teacherActivities = activities[teacher.email] || [];
-                teacherActivities.forEach(activity => {
-                    allActivities.push({
-                        ...activity,
-                        teacherName: teacher.name
-                    });
-                });
-            });
+            const allActivities = getFilteredActivities();
 
             for (let i = 0; i < 42; i++) {
                 const date = new Date(startDate);
@@ -1675,7 +2526,7 @@
                     const eventElement = document.createElement('div');
                     eventElement.className = `calendar-event priority-${activity.priority}`;
                     eventElement.textContent = activity.title.substring(0, 15) + '...';
-                    eventElement.title = `${activity.title} - ${activity.teacherName}`;
+                    eventElement.title = `${activity.title}${activity.teacherName ? ` - ${activity.teacherName}` : ''}`;
                     dayElement.appendChild(eventElement);
                 });
                 
@@ -1701,10 +2552,10 @@
 
         function renderPerformanceChart() {
             const ctx = document.getElementById('performanceChart').getContext('2d');
-            const careerTeachers = teachers[currentCareer] || [];
+            const careerTeachers = getFilteredTeachers();
             
             const performanceData = careerTeachers.map(teacher => {
-                const teacherActivities = activities[teacher.email] || [];
+                const teacherActivities = getFilteredActivities(teacher.email);
                 const completed = teacherActivities.filter(a => a.completed).length;
                 const total = teacherActivities.length;
                 const onTime = teacherActivities.filter(a => 
@@ -1765,7 +2616,8 @@
                 let created = 0;
                 let completed = 0;
                 
-                Object.values(activities).flat().forEach(activity => {
+                const allActivities = getFilteredActivities();
+                allActivities.forEach(activity => {
                     const createdDate = new Date(activity.createdDate || '2024-01-01');
                     const completedDate = activity.completed ? new Date(activity.deadline) : null;
                     
@@ -1815,13 +2667,13 @@
         }
 
         function renderDetailedReport() {
-            const careerTeachers = teachers[currentCareer] || [];
+            const careerTeachers = getFilteredTeachers();
             const reportContainer = document.getElementById('detailedReport');
             
             let reportHTML = '';
             
             careerTeachers.forEach(teacher => {
-                const teacherActivities = activities[teacher.email] || [];
+                const teacherActivities = getFilteredActivities(teacher.email);
                 const completed = teacherActivities.filter(a => a.completed).length;
                 const pending = teacherActivities.filter(a => !a.completed).length;
                 const overdue = teacherActivities.filter(a => 
@@ -1873,7 +2725,6 @@
                 const text = row.textContent.toLowerCase();
                 if (text.includes(searchTerm)) {
                     row.style.display = '';
-                    // Highlight search term
                     if (searchTerm) {
                         highlightSearchTerm(row, searchTerm);
                     }
@@ -1941,346 +2792,4 @@
             }
             
             // Update sort indicator
-            document.getElementById('sortName').textContent = 
-                teacherSortOrder.field === 'name' ? 
-                (teacherSortOrder.direction === 'asc' ? '↑' : '↓') : '↕️';
-            
-            renderTeachers();
-        }
-
-        // Export functions
-        function exportData(format) {
-            const careerTeachers = teachers[currentCareer] || [];
-            let allActivities = [];
-            
-            careerTeachers.forEach(teacher => {
-                const teacherActivities = activities[teacher.email] || [];
-                teacherActivities.forEach(activity => {
-                    allActivities.push({
-                        ...activity,
-                        teacherName: teacher.name,
-                        teacherEmail: teacher.email
-                    });
-                });
-            });
-
-            if (format === 'excel') {
-                exportToExcel(careerTeachers, allActivities);
-            } else if (format === 'pdf') {
-                exportToPDF(careerTeachers, allActivities);
-            }
-        }
-
-        function exportToExcel(teachers, activities) {
-            let csvContent = "data:text/csv;charset=utf-8,";
-            
-            // Teachers data
-            csvContent += "DOCENTES\n";
-            csvContent += "Nombre,Email,Especialidad,Estado,Departamento\n";
-            teachers.forEach(teacher => {
-                csvContent += `${teacher.name},${teacher.email},${teacher.specialty},${teacher.status},${teacher.department}\n`;
-            });
-            
-            csvContent += "\nACTIVIDADES\n";
-            csvContent += "Título,Descripción,Docente,Fecha Límite,Prioridad,Estado,Categoría\n";
-            activities.forEach(activity => {
-                csvContent += `${activity.title},${activity.description},${activity.teacherName},${activity.deadline},${activity.priority},${activity.completed ? 'Completada' : 'Pendiente'},${activity.category || 'General'}\n`;
-            });
-
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `reporte_${currentCareer}_${new Date().toISOString().split('T')[0]}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            showNotification('Reporte Excel exportado', 'success');
-        }
-
-        function exportToPDF(teachers, activities) {
-            // Simple PDF export using window.print()
-            const printWindow = window.open('', '_blank');
-            printWindow.document.write(`
-                <html>
-                <head>
-                    <title>Reporte ${currentCareer}</title>
-                    <style>
-                        body { font-family: Arial, sans-serif; margin: 20px; }
-                        h1, h2 { color: #333; }
-                        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-                        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-                        th { background-color: #f2f2f2; }
-                        .priority-alta { background-color: #fee2e2; }
-                        .priority-media { background-color: #fef3c7; }
-                        .priority-baja { background-color: #dcfce7; }
-                    </style>
-                </head>
-                <body>
-                    <h1>Reporte de ${currentCareer}</h1>
-                    <p>Fecha: ${new Date().toLocaleDateString()}</p>
-                    
-                    <h2>Docentes</h2>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Nombre</th>
-                                <th>Email</th>
-                                <th>Especialidad</th>
-                                <th>Estado</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${teachers.map(teacher => `
-                                <tr>
-                                    <td>${teacher.name}</td>
-                                    <td>${teacher.email}</td>
-                                    <td>${teacher.specialty}</td>
-                                    <td>${teacher.status}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                    
-                    <h2>Actividades</h2>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Título</th>
-                                <th>Docente</th>
-                                <th>Fecha Límite</th>
-                                <th>Prioridad</th>
-                                <th>Estado</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${activities.map(activity => `
-                                <tr class="priority-${activity.priority}">
-                                    <td>${activity.title}</td>
-                                    <td>${activity.teacherName}</td>
-                                    <td>${activity.deadline}</td>
-                                    <td>${activity.priority.toUpperCase()}</td>
-                                    <td>${activity.completed ? 'Completada' : 'Pendiente'}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </body>
-                </html>
-            `);
-            printWindow.document.close();
-            printWindow.print();
-            
-            showNotification('Reporte PDF generado', 'success');
-        }
-
-        // Theme functions
-        function toggleTheme() {
-            isDarkMode = !isDarkMode;
-            document.body.classList.toggle('dark-mode', isDarkMode);
-            document.getElementById('themeToggle').textContent = isDarkMode ? '☀️' : '🌙';
-            localStorage.setItem('darkMode', isDarkMode);
-        }
-
-        function loadTheme() {
-            const savedTheme = localStorage.getItem('darkMode');
-            if (savedTheme === 'true') {
-                isDarkMode = true;
-                document.body.classList.add('dark-mode');
-                document.getElementById('themeToggle').textContent = '☀️';
-            }
-        }
-
-        // Modal functions
-        function showAddTeacherModal() {
-            document.getElementById('addTeacherModal').classList.remove('hidden');
-        }
-
-        function closeAddTeacherModal() {
-            document.getElementById('addTeacherModal').classList.add('hidden');
-            document.getElementById('addTeacherForm').reset();
-        }
-
-        async function showAddActivityModal() {
-            if (isFirestoreConnected) {
-                await loadFromFirestore();
-            }
-
-            const select = document.getElementById('activityTeacher');
-            const careerTeachers = teachers[currentCareer] || [];
-            
-            select.innerHTML = '<option value="">Seleccionar docente...</option>' +
-                careerTeachers.map(teacher => 
-                    `<option value="${teacher.email}">${teacher.name}</option>`
-                ).join('');
-            
-            document.getElementById('addActivityModal').classList.remove('hidden');
-        }
-
-        function closeAddActivityModal() {
-            document.getElementById('addActivityModal').classList.add('hidden');
-            document.getElementById('addActivityForm').reset();
-        }
-
-        // CRUD functions
-        async function handleAddTeacher(e) {
-            e.preventDefault();
-            
-            const name = document.getElementById('teacherName').value.trim();
-            const email = document.getElementById('teacherEmail').value.trim();
-            const specialty = document.getElementById('teacherSpecialty').value.trim();
-            const phone = document.getElementById('teacherPhone').value.trim();
-            const department = document.getElementById('teacherDepartment').value;
-            
-            const newId = Math.max(...teachers[currentCareer].map(t => t.id), 0) + 1;
-            
-            const newTeacher = {
-                id: newId,
-                name: name,
-                email: email,
-                specialty: specialty,
-                status: 'Activo',
-                phone: phone,
-                department: department,
-                joinDate: new Date().toISOString().split('T')[0]
-            };
-            
-            teachers[currentCareer].push(newTeacher);
-            activities[email] = [];
-            
-            saveLocalData();
-            if (isFirestoreConnected) await syncToFirestore();
-            
-            renderTeachers();
-            closeAddTeacherModal();
-            showNotification('Docente agregado exitosamente', 'success');
-        }
-
-        async function handleAddActivity(e) {
-            e.preventDefault();
-            
-            const title = document.getElementById('activityTitle').value.trim();
-            const description = document.getElementById('activityDescription').value.trim();
-            const teacherEmail = document.getElementById('activityTeacher').value;
-            const deadline = document.getElementById('activityDeadline').value;
-            const priority = document.getElementById('activityPriority').value;
-            const category = document.getElementById('activityCategory').value;
-            
-            if (!activities[teacherEmail]) {
-                activities[teacherEmail] = [];
-            }
-            
-            const newId = Math.max(...Object.values(activities).flat().map(a => a.id), 0) + 1;
-            
-            const newActivity = {
-                id: newId,
-                title: title,
-                description: description,
-                deadline: deadline,
-                priority: priority,
-                category: category,
-                completed: false,
-                status: 'pending',
-                createdDate: new Date().toISOString().split('T')[0]
-            };
-            
-            activities[teacherEmail].push(newActivity);
-            
-            saveLocalData();
-            if (isFirestoreConnected) await syncToFirestore();
-            
-            renderActivities();
-            closeAddActivityModal();
-            showNotification('Actividad creada exitosamente', 'success');
-        }
-
-        async function deleteTeacher(teacherId) {
-            if (confirm('¿Estás seguro de eliminar este docente?')) {
-                const teacher = teachers[currentCareer].find(t => t.id === teacherId);
-                if (teacher) {
-                    delete activities[teacher.email];
-                }
-                
-                teachers[currentCareer] = teachers[currentCareer].filter(t => t.id !== teacherId);
-                
-                saveLocalData();
-                if (isFirestoreConnected) await syncToFirestore();
-                
-                renderTeachers();
-                showNotification('Docente eliminado', 'success');
-            }
-        }
-
-        async function deleteActivity(teacherEmail, activityId) {
-            if (confirm('¿Estás seguro de eliminar esta actividad?')) {
-                activities[teacherEmail] = activities[teacherEmail].filter(a => a.id !== activityId);
-                
-                saveLocalData();
-                if (isFirestoreConnected) await syncToFirestore();
-                
-                renderActivities();
-                showNotification('Actividad eliminada', 'success');
-            }
-        }
-
-        async function toggleActivity(teacherEmail, activityId) {
-            const activity = activities[teacherEmail].find(a => a.id === activityId);
-            if (activity) {
-                activity.completed = !activity.completed;
-                activity.status = activity.completed ? 'completed' : 'pending';
-                
-                saveLocalData();
-                if (isFirestoreConnected) await syncToFirestore();
-                
-                renderActivities();
-                showNotification(activity.completed ? 'Actividad completada' : 'Actividad marcada como pendiente', 'success');
-            }
-        }
-
-        function editTeacher(teacherId) {
-            showNotification('Función de edición en desarrollo', 'info');
-        }
-
-        function editActivity(teacherEmail, activityId) {
-            showNotification('Función de edición en desarrollo', 'info');
-        }
-
-        // Data persistence
-        function saveLocalData() {
-            localStorage.setItem('teachers', JSON.stringify(teachers));
-            localStorage.setItem('activities', JSON.stringify(activities));
-            localStorage.setItem('users', JSON.stringify(users));
-        }
-
-        function loadLocalData() {
-            const savedTeachers = localStorage.getItem('teachers');
-            const savedActivities = localStorage.getItem('activities');
-            const savedUsers = localStorage.getItem('users');
-            
-            if (savedTeachers) teachers = JSON.parse(savedTeachers);
-            if (savedActivities) activities = JSON.parse(savedActivities);
-            if (savedUsers) users = { ...users, ...JSON.parse(savedUsers) };
-        }
-
-        // Utility functions
-        function showNotification(message, type = 'info') {
-            const notification = document.createElement('div');
-            notification.className = `notification ${type}`;
-            notification.innerHTML = `
-                <div class="flex items-center justify-between">
-                    <span>${message}</span>
-                    <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white hover:text-gray-200">✕</button>
-                </div>
-            `;
-            
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                if (notification.parentElement) {
-                    notification.remove();
-                }
-            }, 5000);
-        }
-    </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'975e44e1a4d157bd',t:'MTc1NjMyNjAyMS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
-</html>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'975e64ac62bfa99e',t:'MTc1NjMyNzMyMy4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
