@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema Académico - Firestore</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .fade-in { animation: fadeIn 0.5s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .firestore-connected {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+
+        .firestore-offline {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+        }
+
+        .firestore-syncing {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .spinning {
+            animation: spin 1s linear infinite;
+        }
+
+        .tab-active { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            color: white;
+        }
+
+        .activity-card {
+            transition: all 0.3s ease;
+            background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+            border: 1px solid rgba(102, 126, 234, 0.1);
+        }
+
+        .activity-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 15px 35px rgba(102, 126, 234, 0.15);
+        }
+
+        .activity-completed {
+            background: linear-gradient(145deg, #f0fdf4 0%, #dcfce7 100%);
+            border: 2px solid #22c55e;
+        }
+
+        .priority-alta { 
+            background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+            color: #dc2626;
+            border: 1px solid #fca5a5;
+        }
+        .priority-media { 
+            background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+            color: #d97706;
+            border: 1px solid #fcd34d;
+        }
+        .priority-baja { 
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            color: #16a34a;
+            border: 1px solid #86efac;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- Firestore Status -->
+    <div id="firestoreStatus" class="fixed top-4 right-4 z-50 px-4 py-2 rounded-full shadow-lg firestore-offline">
+        <div class="flex items-center space-x-2">
+            <span id="statusIcon" class="text-sm">❌</span>
+            <span id="statusText" class="text-xs font-medium">Sin Firestore</span>
+        </div>
+    </div>
+
+    <!-- Firestore Setup Modal -->
+    <div id="firestoreModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-white rounded-xl p-8 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <span class="text-white text-2xl">🔥</span>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-900 mb-2">Configuración Firebase Firestore</h3>
+                <p class="text-gray-600">Conecta tu base de datos en tiempo real</p>
+            </div>
+            
+            <div class="space-y-4">
+                <div class="bg-orange-50 rounded-lg p-4 border border-orange-200">
+                    <h4 class="font-semibold text-orange-900 mb-2">🚀 Pasos rápidos:</h4>
+                    <ol class="list-decimal list-inside space-y-1 text-sm text-orange-800">
+                        <li>Ve a <a href="https://console.firebase.google.com" target="_blank" class="underline font-medium">Firebase Console</a></li>
+                        <li>Crea proyecto → Habilita Firestore → Agrega app web</li>
+                        <li>Copia la configuración aquí abajo</li>
+                    </ol>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">API Key</label>
+                        <input type="text" id="apiKey" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500" placeholder="AIzaSyC...">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Project ID</label>
+                        <input type="text" id="projectId" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500" placeholder="mi-proyecto">
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center pt-4">
+                    <button onclick="skipFirestore()" class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg">
+                        Usar sin Firestore
+                    </button>
+                    <button onclick="connectFirestore()" class="px-6 py-2 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white rounded-lg font-medium">
+                        🔥 Conectar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Screen -->
+    <div id="loginScreen" class="min-h-screen flex items-center justify-center p-4">
+        <div class="glass-effect rounded-3xl shadow-2xl p-8 w-full max-w-md">
+            <div class="text-center mb-8">
+                <div class="w-20 h-20 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                    <span class="text-white font-bold text-3xl">🎓</span>
+                </div>
+                <h1 class="text-3xl font-bold gradient-text mb-2">Control Académico</h1>
+                <p class="text-gray-600">Sistema con Firestore</p>
+            </div>
+            
+            <form id="loginForm" class="space-y-6">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">📧 Email</label>
+                    <input type="email" id="loginEmail" required 
+                           class="w-full px-4 py-4 bg-white/80 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500"
+                           placeholder="usuario@universidad.edu">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">🔒 Contraseña</label>
+                    <input type="password" id="loginPassword" required 
+                           class="w-full px-4 py-4 bg-white/80 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500"
+                           placeholder="••••••••">
+                </div>
+                
+                <button type="submit" class="w-full bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-700 hover:via-purple-700 hover:to-pink-700 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-300">
+                    ✨ Iniciar Sesión
+                </button>
+            </form>
+
+            <!-- Demo Credentials -->
+            <div class="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-200">
+                <h4 class="text-sm font-semibold text-blue-900 mb-3">🔑 Credenciales Demo:</h4>
+                <div class="space-y-2">
+                    <button onclick="fillLogin('admin@universidad.edu', 'admin123')" class="w-full text-left p-2 bg-white rounded-lg hover:bg-blue-100 transition-colors">
+                        <div class="text-xs font-medium text-blue-800">👑 Admin</div>
+                        <div class="text-xs text-blue-600">admin@universidad.edu</div>
+                    </button>
+                    <button onclick="fillLogin('profesor@universidad.edu', 'profesor123')" class="w-full text-left p-2 bg-white rounded-lg hover:bg-blue-100 transition-colors">
+                        <div class="text-xs font-medium text-blue-800">👨‍🏫 Profesor</div>
+                        <div class="text-xs text-blue-600">profesor@universidad.edu</div>
+                    </button>
+                </div>
+            </div>
+
+            <div class="mt-4 text-center">
+                <button onclick="showFirestoreModal()" class="text-orange-600 hover:text-orange-800 font-semibold text-sm">
+                    🔥 Configurar Firestore
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="mainApp" class="hidden">
+        <!-- Header -->
+        <header class="glass-effect shadow-xl border-b border-white/20 sticky top-0 z-40">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center py-4">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-12 h-12 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
+                            <span class="text-white font-bold text-xl">🎓</span>
+                        </div>
+                        <div>
+                            <h1 class="text-2xl font-bold gradient-text">Control Académico</h1>
+                            <p class="text-sm text-gray-600 font-medium">Sistema con Firestore</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="text-right">
+                            <p id="userName" class="text-sm font-semibold text-gray-800">Usuario</p>
+                            <p id="userRole" class="text-xs text-gray-600">Rol</p>
+                        </div>
+                        <button onclick="logout()" class="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white px-4 py-2 rounded-xl text-sm font-medium">
+                            🚪 Salir
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Career Selection -->
+            <div id="careerSelection" class="mb-8">
+                <h2 class="text-xl font-semibold text-white mb-4">Seleccionar Carrera</h2>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="glass-effect rounded-xl p-6 cursor-pointer hover:shadow-xl transition-all" onclick="selectCareer('software')">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                                <span class="text-2xl">💻</span>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900">Ingeniería en Software</h3>
+                                <p class="text-gray-600 text-sm">Gestión de docentes y actividades</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="glass-effect rounded-xl p-6 cursor-pointer hover:shadow-xl transition-all" onclick="selectCareer('mecatronica')">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                                <span class="text-2xl">⚙️</span>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900">Ingeniería en Mecatrónica</h3>
+                                <p class="text-gray-600 text-sm">Gestión de docentes y actividades</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard -->
+            <div id="dashboard" class="hidden fade-in">
+                <!-- Career Header -->
+                <div class="glass-effect rounded-2xl p-8 mb-8">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-4">
+                            <div id="careerIcon" class="w-16 h-16 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-2xl flex items-center justify-center">
+                                <span class="text-3xl">💻</span>
+                            </div>
+                            <div>
+                                <h2 id="careerTitle" class="text-3xl font-bold gradient-text">Carrera</h2>
+                                <p class="text-gray-600 font-medium">Panel de Control</p>
+                            </div>
+                        </div>
+                        <button onclick="goBack()" class="bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white px-6 py-3 rounded-xl font-medium">
+                            ← Volver
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Navigation Tabs -->
+                <div class="glass-effect rounded-2xl mb-8 overflow-hidden">
+                    <div class="flex bg-gradient-to-r from-gray-50/50 to-white/50">
+                        <button id="teachersTab" class="tab-button flex-1 px-8 py-5 text-sm font-semibold transition-all" onclick="showTab('teachers')">
+                            <div class="flex items-center justify-center space-x-2">
+                                <span>👥</span>
+                                <span>Docentes</span>
+                            </div>
+                        </button>
+                        <button id="activitiesTab" class="tab-button flex-1 px-8 py-5 text-sm font-semibold transition-all" onclick="showTab('activities')">
+                            <div class="flex items-center justify-center space-x-2">
+                                <span>📋</span>
+                                <span>Actividades</span>
+                            </div>
+                        </button>
+                        <button id="progressTab" class="tab-button flex-1 px-8 py-5 text-sm font-semibold transition-all" onclick="showTab('progress')">
+                            <div class="flex items-center justify-center space-x-2">
+                                <span>📊</span>
+                                <span>Progreso</span>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tab Content -->
+                <div id="tabContent" class="glass-effect rounded-xl p-6">
+                    <!-- Teachers Section -->
+                    <div id="teachersSection" class="tab-content hidden">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-lg font-semibold text-gray-900">Gestión de Docentes</h3>
+                            <button id="addTeacherBtn" onclick="showAddTeacherModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg">
+                                + Agregar Docente
+                            </button>
+                        </div>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nombre</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Especialidad</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="teachersTableBody" class="bg-white divide-y divide-gray-200">
+                                    <!-- Teachers will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Activities Section -->
+                    <div id="activitiesSection" class="tab-content hidden">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-lg font-semibold text-gray-900">Gestión de Actividades</h3>
+                            <button id="addActivityBtn" onclick="showAddActivityModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg">
+                                + Nueva Actividad
+                            </button>
+                        </div>
+                        
+                        <div id="activitiesGrid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <!-- Activities will be populated here -->
+                        </div>
+                    </div>
+
+                    <!-- Progress Section -->
+                    <div id="progressSection" class="tab-content hidden">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-6">Progreso General</h3>
+                        
+                        <div class="grid md:grid-cols-3 gap-6 mb-8">
+                            <div class="bg-blue-50 rounded-lg p-4">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-blue-600 text-sm font-medium">Total Docentes</p>
+                                        <p id="totalTeachers" class="text-2xl font-bold text-blue-900">0</p>
+                                    </div>
+                                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                                        <span class="text-blue-600 text-xl">👥</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-green-50 rounded-lg p-4">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-green-600 text-sm font-medium">Actividades</p>
+                                        <p id="totalActivities" class="text-2xl font-bold text-green-900">0</p>
+                                    </div>
+                                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                                        <span class="text-green-600 text-xl">📋</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-purple-50 rounded-lg p-4">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-purple-600 text-sm font-medium">Completadas</p>
+                                        <p id="completedActivities" class="text-2xl font-bold text-purple-900">0</p>
+                                    </div>
+                                    <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                                        <span class="text-purple-600 text-xl">✅</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="progressChart" class="bg-gray-50 rounded-lg p-6">
+                            <h4 class="text-lg font-semibold text-gray-900 mb-4">Progreso por Docente</h4>
+                            <div id="progressBars" class="space-y-4">
+                                <!-- Progress bars will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add Teacher Modal -->
+    <div id="addTeacherModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-white rounded-xl p-8 w-full max-w-md mx-4">
+            <h3 class="text-xl font-bold text-gray-900 mb-6">Agregar Nuevo Docente</h3>
+            
+            <form id="addTeacherForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Nombre Completo</label>
+                    <input type="text" id="teacherName" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                    <input type="email" id="teacherEmail" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Especialidad</label>
+                    <input type="text" id="teacherSpecialty" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                </div>
+                
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button type="button" onclick="closeAddTeacherModal()" class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg">
+                        Agregar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Activity Modal -->
+    <div id="addActivityModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-white rounded-xl p-8 w-full max-w-md mx-4">
+            <h3 class="text-xl font-bold text-gray-900 mb-6">Nueva Actividad</h3>
+            
+            <form id="addActivityForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Título</label>
+                    <input type="text" id="activityTitle" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Descripción</label>
+                    <textarea id="activityDescription" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" rows="3"></textarea>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Asignar a Docente</label>
+                    <select id="activityTeacher" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                        <option value="">Seleccionar docente...</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Fecha Límite</label>
+                    <input type="date" id="activityDeadline" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Prioridad</label>
+                    <select id="activityPriority" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                        <option value="baja">Baja</option>
+                        <option value="media">Media</option>
+                        <option value="alta">Alta</option>
+                    </select>
+                </div>
+                
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button type="button" onclick="closeAddActivityModal()" class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg">
+                        Crear
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentUser = null;
+        let currentCareer = '';
+        let currentTab = 'teachers';
+        let db = null;
+        let isFirestoreConnected = false;
+
+        // Data storage
+        let users = {
+            'admin@universidad.edu': {
+                password: 'admin123',
+                role: 'admin',
+                name: 'Administrador Sistema'
+            },
+            'profesor@universidad.edu': {
+                password: 'profesor123',
+                role: 'teacher',
+                name: 'Dr. Juan Pérez'
+            }
+        };
+
+        let teachers = {
+            software: [
+                { id: 1, name: 'Dr. Ana García', email: 'ana.garcia@universidad.edu', specialty: 'Desarrollo Web', status: 'Activo' },
+                { id: 2, name: 'Ing. Carlos López', email: 'carlos.lopez@universidad.edu', specialty: 'Base de Datos', status: 'Activo' }
+            ],
+            mecatronica: [
+                { id: 3, name: 'Dr. María Rodríguez', email: 'maria.rodriguez@universidad.edu', specialty: 'Automatización', status: 'Activo' },
+                { id: 4, name: 'Ing. Pedro Martínez', email: 'pedro.martinez@universidad.edu', specialty: 'Robótica', status: 'Activo' }
+            ]
+        };
+
+        let activities = {
+            'ana.garcia@universidad.edu': [
+                { id: 1, title: 'Actualización Plan de Estudios', description: 'Revisar contenidos de desarrollo web', deadline: '2024-02-15', priority: 'alta', completed: false },
+                { id: 2, title: 'Capacitación React', description: 'Completar curso de React', deadline: '2024-02-28', priority: 'media', completed: true }
+            ],
+            'carlos.lopez@universidad.edu': [
+                { id: 3, title: 'Migración Base de Datos', description: 'Actualizar sistema del laboratorio', deadline: '2024-02-20', priority: 'alta', completed: false }
+            ]
+        };
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+            setupEventListeners();
+        });
+
+        function initializeApp() {
+            updateFirestoreStatus('offline', 'Sin configurar');
+            loadLocalData();
+            checkAuthStatus();
+        }
+
+        function setupEventListeners() {
+            document.getElementById('loginForm').addEventListener('submit', handleLogin);
+            document.getElementById('addTeacherForm').addEventListener('submit', handleAddTeacher);
+            document.getElementById('addActivityForm').addEventListener('submit', handleAddActivity);
+        }
+
+        // Firestore functions
+        function showFirestoreModal() {
+            document.getElementById('firestoreModal').classList.remove('hidden');
+        }
+
+        function skipFirestore() {
+            document.getElementById('firestoreModal').classList.add('hidden');
+            updateFirestoreStatus('offline', 'Modo local');
+            showNotification('Usando almacenamiento local', 'info');
+        }
+
+        async function connectFirestore() {
+            const apiKey = document.getElementById('apiKey').value.trim();
+            const projectId = document.getElementById('projectId').value.trim();
+
+            if (!apiKey || !projectId) {
+                showNotification('Por favor completa todos los campos', 'error');
+                return;
+            }
+
+            updateFirestoreStatus('syncing', 'Conectando...');
+
+            try {
+                const firebaseConfig = {
+                    apiKey: apiKey,
+                    authDomain: `${projectId}.firebaseapp.com`,
+                    projectId: projectId,
+                    storageBucket: `${projectId}.appspot.com`,
+                    appId: `1:123456789:web:${projectId}`
+                };
+
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(firebaseConfig);
+                }
+
+                db = firebase.firestore();
+                isFirestoreConnected = true;
+
+                // Test connection
+                await db.collection('test').limit(1).get();
+
+                updateFirestoreStatus('connected', 'Conectado');
+                document.getElementById('firestoreModal').classList.add('hidden');
+                
+                // Sync data to Firestore
+                await syncToFirestore();
+                
+                showNotification('¡Firestore conectado exitosamente!', 'success');
+
+            } catch (error) {
+                console.error('Error connecting to Firestore:', error);
+                updateFirestoreStatus('offline', 'Error de conexión');
+                showNotification('Error conectando a Firestore. Verifica la configuración.', 'error');
+                isFirestoreConnected = false;
+            }
+        }
+
+        async function syncToFirestore() {
+            if (!isFirestoreConnected || !db) return;
+
+            try {
+                // Sync users
+                for (const [email, userData] of Object.entries(users)) {
+                    await db.collection('users').doc(email).set(userData);
+                }
+
+                // Sync teachers
+                for (const [career, teacherList] of Object.entries(teachers)) {
+                    await db.collection('teachers').doc(career).set({ teachers: teacherList });
+                }
+
+                // Sync activities
+                for (const [email, activityList] of Object.entries(activities)) {
+                    await db.collection('activities').doc(email).set({ activities: activityList });
+                }
+
+                console.log('Data synced to Firestore successfully');
+            } catch (error) {
+                console.error('Error syncing to Firestore:', error);
+            }
+        }
+
+        async function loadFromFirestore() {
+            if (!isFirestoreConnected || !db) return;
+
+            try {
+                // Load users
+                const usersSnapshot = await db.collection('users').get();
+                if (!usersSnapshot.empty) {
+                    users = {};
+                    usersSnapshot.forEach(doc => {
+                        users[doc.id] = doc.data();
+                    });
+                }
+
+                // Load teachers
+                const teachersSnapshot = await db.collection('teachers').get();
+                if (!teachersSnapshot.empty) {
+                    teachers = {};
+                    teachersSnapshot.forEach(doc => {
+                        teachers[doc.id] = doc.data().teachers || [];
+                    });
+                }
+
+                // Load activities
+                const activitiesSnapshot = await db.collection('activities').get();
+                if (!activitiesSnapshot.empty) {
+                    activities = {};
+                    activitiesSnapshot.forEach(doc => {
+                        activities[doc.id] = doc.data().activities || [];
+                    });
+                }
+
+                console.log('Data loaded from Firestore successfully');
+            } catch (error) {
+                console.error('Error loading from Firestore:', error);
+            }
+        }
+
+        function updateFirestoreStatus(status, message) {
+            const statusElement = document.getElementById('firestoreStatus');
+            const iconElement = document.getElementById('statusIcon');
+            const textElement = document.getElementById('statusText');
+
+            statusElement.classList.remove('firestore-connected', 'firestore-offline', 'firestore-syncing');
+            iconElement.classList.remove('spinning');
+
+            switch (status) {
+                case 'connected':
+                    statusElement.classList.add('firestore-connected');
+                    iconElement.textContent = '🔥';
+                    break;
+                case 'syncing':
+                    statusElement.classList.add('firestore-syncing');
+                    iconElement.textContent = '🔄';
+                    iconElement.classList.add('spinning');
+                    break;
+                default:
+                    statusElement.classList.add('firestore-offline');
+                    iconElement.textContent = '❌';
+            }
+
+            textElement.textContent = message;
+        }
+
+        // Authentication functions
+        function checkAuthStatus() {
+            const savedUser = localStorage.getItem('currentUser');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                showMainApp();
+            } else {
+                showLoginScreen();
+            }
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+
+            const user = users[email];
+            
+            if (!user) {
+                showNotification('Usuario no encontrado', 'error');
+                return;
+            }
+
+            if (user.password !== password) {
+                showNotification('Contraseña incorrecta', 'error');
+                return;
+            }
+
+            currentUser = {
+                email: email,
+                name: user.name,
+                role: user.role
+            };
+
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            showMainApp();
+            showNotification('¡Bienvenido!', 'success');
+        }
+
+        function logout() {
+            localStorage.removeItem('currentUser');
+            currentUser = null;
+            currentCareer = '';
+            showLoginScreen();
+            showNotification('Sesión cerrada', 'info');
+        }
+
+        function fillLogin(email, password) {
+            document.getElementById('loginEmail').value = email;
+            document.getElementById('loginPassword').value = password;
+        }
+
+        function showLoginScreen() {
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('mainApp').classList.add('hidden');
+        }
+
+        function showMainApp() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+            
+            document.getElementById('userName').textContent = currentUser.name;
+            document.getElementById('userRole').textContent = currentUser.role === 'admin' ? 'Administrador' : 'Docente';
+            
+            updateUIForRole();
+        }
+
+        function updateUIForRole() {
+            const isAdmin = currentUser.role === 'admin';
+            
+            document.getElementById('addTeacherBtn').style.display = isAdmin ? 'block' : 'none';
+            document.getElementById('addActivityBtn').style.display = isAdmin ? 'block' : 'none';
+        }
+
+        // Career and navigation functions
+        function selectCareer(career) {
+            currentCareer = career;
+            
+            const careerData = {
+                software: { icon: '💻', title: 'Ingeniería en Software' },
+                mecatronica: { icon: '⚙️', title: 'Ingeniería en Mecatrónica' }
+            };
+
+            document.getElementById('careerIcon').innerHTML = `<span class="text-3xl">${careerData[career].icon}</span>`;
+            document.getElementById('careerTitle').textContent = careerData[career].title;
+            
+            document.getElementById('careerSelection').classList.add('hidden');
+            document.getElementById('dashboard').classList.remove('hidden');
+            
+            showTab('teachers');
+        }
+
+        function goBack() {
+            document.getElementById('dashboard').classList.add('hidden');
+            document.getElementById('careerSelection').classList.remove('hidden');
+            currentCareer = '';
+        }
+
+        function showTab(tab) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab-button').forEach(el => {
+                el.classList.remove('tab-active', 'text-white');
+                el.classList.add('text-gray-700');
+            });
+            
+            // Show selected tab content
+            document.getElementById(tab + 'Section').classList.remove('hidden');
+            
+            // Add active class to selected tab
+            const activeTab = document.getElementById(tab + 'Tab');
+            activeTab.classList.add('tab-active', 'text-white');
+            activeTab.classList.remove('text-gray-700');
+            
+            currentTab = tab;
+            
+            // Load content based on tab
+            if (tab === 'teachers') renderTeachers();
+            if (tab === 'activities') renderActivities();
+            if (tab === 'progress') renderProgress();
+        }
+
+        // Render functions
+        function renderTeachers() {
+            const tbody = document.getElementById('teachersTableBody');
+            const careerTeachers = teachers[currentCareer] || [];
+            
+            tbody.innerHTML = careerTeachers.map(teacher => `
+                <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center mr-3">
+                                <span class="text-indigo-600 text-sm font-medium">${teacher.name.charAt(0)}</span>
+                            </div>
+                            <span class="text-sm font-medium text-gray-900">${teacher.name}</span>
+                        </div>
+                    </td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-600">${teacher.email}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-600">${teacher.specialty}</td>
+                    <td class="px-4 py-4 whitespace-nowrap">
+                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                            ${teacher.status}
+                        </span>
+                    </td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm font-medium">
+                        <button onclick="deleteTeacher(${teacher.id})" class="text-red-600 hover:text-red-900">Eliminar</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function renderActivities() {
+            const grid = document.getElementById('activitiesGrid');
+            const careerTeachers = teachers[currentCareer] || [];
+            let allActivities = [];
+            
+            careerTeachers.forEach(teacher => {
+                const teacherActivities = activities[teacher.email] || [];
+                teacherActivities.forEach(activity => {
+                    allActivities.push({
+                        ...activity,
+                        teacherName: teacher.name,
+                        teacherEmail: teacher.email
+                    });
+                });
+            });
+            
+            if (allActivities.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full text-center py-12">
+                        <div class="text-gray-400 text-6xl mb-4">📋</div>
+                        <h3 class="text-lg font-medium text-gray-900 mb-2">No hay actividades</h3>
+                        <p class="text-gray-500">Comienza creando una nueva actividad</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            grid.innerHTML = allActivities.map(activity => `
+                <div class="activity-card ${activity.completed ? 'activity-completed' : ''} rounded-2xl p-6 shadow-lg">
+                    <div class="mb-4">
+                        <div class="flex justify-between items-start mb-3">
+                            <h4 class="font-bold text-gray-900 text-lg">${activity.title}</h4>
+                            <span class="inline-flex px-3 py-1 text-xs font-bold rounded-full priority-${activity.priority}">
+                                ${activity.priority.toUpperCase()}
+                            </span>
+                        </div>
+                        <p class="text-gray-600 text-sm">${activity.description}</p>
+                    </div>
+                    
+                    <div class="bg-blue-50 rounded-xl p-4 mb-4">
+                        <p class="text-blue-800 font-semibold text-sm">Asignado a: ${activity.teacherName}</p>
+                    </div>
+                    
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="text-gray-700 font-medium">Fecha límite:</span>
+                        <span class="font-bold text-gray-800">${activity.deadline}</span>
+                    </div>
+                    
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-2">
+                            <input type="checkbox" ${activity.completed ? 'checked' : ''} 
+                                   onchange="toggleActivity('${activity.teacherEmail}', ${activity.id})" 
+                                   class="w-4 h-4 text-green-600 rounded">
+                            <span class="text-sm text-gray-700">Completada</span>
+                        </div>
+                        <button onclick="deleteActivity('${activity.teacherEmail}', ${activity.id})" 
+                                class="text-red-600 hover:text-red-800 text-sm">
+                            🗑️ Eliminar
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderProgress() {
+            const careerTeachers = teachers[currentCareer] || [];
+            let totalActivities = 0;
+            let completedActivities = 0;
+            
+            careerTeachers.forEach(teacher => {
+                const teacherActivities = activities[teacher.email] || [];
+                totalActivities += teacherActivities.length;
+                completedActivities += teacherActivities.filter(a => a.completed).length;
+            });
+            
+            document.getElementById('totalTeachers').textContent = careerTeachers.length;
+            document.getElementById('totalActivities').textContent = totalActivities;
+            document.getElementById('completedActivities').textContent = completedActivities;
+            
+            // Render progress bars
+            const progressBars = document.getElementById('progressBars');
+            progressBars.innerHTML = careerTeachers.map(teacher => {
+                const teacherActivities = activities[teacher.email] || [];
+                const completed = teacherActivities.filter(a => a.completed).length;
+                const total = teacherActivities.length;
+                const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+                
+                return `
+                    <div class="bg-white rounded-lg p-4 border">
+                        <div class="flex justify-between items-center mb-2">
+                            <h5 class="font-medium text-gray-900">${teacher.name}</h5>
+                            <span class="text-sm font-semibold text-gray-600">${percentage}%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-3">
+                            <div class="bg-gradient-to-r from-indigo-500 to-purple-600 h-3 rounded-full" style="width: ${percentage}%"></div>
+                        </div>
+                        <div class="text-xs text-gray-500 mt-1">
+                            ${completed} de ${total} actividades completadas
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Modal functions
+        function showAddTeacherModal() {
+            document.getElementById('addTeacherModal').classList.remove('hidden');
+        }
+
+        function closeAddTeacherModal() {
+            document.getElementById('addTeacherModal').classList.add('hidden');
+            document.getElementById('addTeacherForm').reset();
+        }
+
+        function showAddActivityModal() {
+            const select = document.getElementById('activityTeacher');
+            const careerTeachers = teachers[currentCareer] || [];
+            
+            select.innerHTML = '<option value="">Seleccionar docente...</option>' +
+                careerTeachers.map(teacher => 
+                    `<option value="${teacher.email}">${teacher.name}</option>`
+                ).join('');
+            
+            document.getElementById('addActivityModal').classList.remove('hidden');
+        }
+
+        function closeAddActivityModal() {
+            document.getElementById('addActivityModal').classList.add('hidden');
+            document.getElementById('addActivityForm').reset();
+        }
+
+        // CRUD functions
+        function handleAddTeacher(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('teacherName').value.trim();
+            const email = document.getElementById('teacherEmail').value.trim();
+            const specialty = document.getElementById('teacherSpecialty').value.trim();
+            
+            const newId = Math.max(...teachers[currentCareer].map(t => t.id), 0) + 1;
+            
+            const newTeacher = {
+                id: newId,
+                name: name,
+                email: email,
+                specialty: specialty,
+                status: 'Activo'
+            };
+            
+            teachers[currentCareer].push(newTeacher);
+            activities[email] = [];
+            
+            saveLocalData();
+            if (isFirestoreConnected) syncToFirestore();
+            
+            renderTeachers();
+            closeAddTeacherModal();
+            showNotification('Docente agregado exitosamente', 'success');
+        }
+
+        function handleAddActivity(e) {
+            e.preventDefault();
+            
+            const title = document.getElementById('activityTitle').value.trim();
+            const description = document.getElementById('activityDescription').value.trim();
+            const teacherEmail = document.getElementById('activityTeacher').value;
+            const deadline = document.getElementById('activityDeadline').value;
+            const priority = document.getElementById('activityPriority').value;
+            
+            if (!activities[teacherEmail]) {
+                activities[teacherEmail] = [];
+            }
+            
+            const newId = Math.max(...Object.values(activities).flat().map(a => a.id), 0) + 1;
+            
+            const newActivity = {
+                id: newId,
+                title: title,
+                description: description,
+                deadline: deadline,
+                priority: priority,
+                completed: false
+            };
+            
+            activities[teacherEmail].push(newActivity);
+            
+            saveLocalData();
+            if (isFirestoreConnected) syncToFirestore();
+            
+            renderActivities();
+            closeAddActivityModal();
+            showNotification('Actividad creada exitosamente', 'success');
+        }
+
+        function deleteTeacher(teacherId) {
+            if (confirm('¿Estás seguro de eliminar este docente?')) {
+                teachers[currentCareer] = teachers[currentCareer].filter(t => t.id !== teacherId);
+                
+                saveLocalData();
+                if (isFirestoreConnected) syncToFirestore();
+                
+                renderTeachers();
+                showNotification('Docente eliminado', 'success');
+            }
+        }
+
+        function deleteActivity(teacherEmail, activityId) {
+            if (confirm('¿Estás seguro de eliminar esta actividad?')) {
+                activities[teacherEmail] = activities[teacherEmail].filter(a => a.id !== activityId);
+                
+                saveLocalData();
+                if (isFirestoreConnected) syncToFirestore();
+                
+                renderActivities();
+                showNotification('Actividad eliminada', 'success');
+            }
+        }
+
+        function toggleActivity(teacherEmail, activityId) {
+            const activity = activities[teacherEmail].find(a => a.id === activityId);
+            if (activity) {
+                activity.completed = !activity.completed;
+                
+                saveLocalData();
+                if (isFirestoreConnected) syncToFirestore();
+                
+                renderActivities();
+                showNotification(activity.completed ? 'Actividad completada' : 'Actividad marcada como pendiente', 'success');
+            }
+        }
+
+        // Data persistence
+        function saveLocalData() {
+            localStorage.setItem('teachers', JSON.stringify(teachers));
+            localStorage.setItem('activities', JSON.stringify(activities));
+            localStorage.setItem('users', JSON.stringify(users));
+        }
+
+        function loadLocalData() {
+            const savedTeachers = localStorage.getItem('teachers');
+            const savedActivities = localStorage.getItem('activities');
+            const savedUsers = localStorage.getItem('users');
+            
+            if (savedTeachers) teachers = JSON.parse(savedTeachers);
+            if (savedActivities) activities = JSON.parse(savedActivities);
+            if (savedUsers) users = { ...users, ...JSON.parse(savedUsers) };
+        }
+
+        // Utility functions
+        function showNotification(message, type = 'info') {
+            const colors = {
+                success: 'bg-green-500',
+                error: 'bg-red-500',
+                info: 'bg-blue-500',
+                warning: 'bg-yellow-500'
+            };
+            
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 left-1/2 transform -translate-x-1/2 ${colors[type]} text-white px-6 py-3 rounded-lg shadow-lg z-50 fade-in`;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'975dbd230462d87a',t:'MTc1NjMyMDQ2MS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
