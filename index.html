@@ -3,357 +3,334 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema Académico - Firestore</title>
+    <title>Tablero de Control Académico</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        body { 
-            font-family: 'Inter', sans-serif; 
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-        }
-        
-        .glass-effect {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        
-        .fade-in { 
-            animation: fadeIn 0.5s ease-out; 
-        }
-        
-        @keyframes fadeIn { 
-            from { opacity: 0; transform: translateY(20px); } 
-            to { opacity: 1; transform: translateY(0); } 
-        }
-
-        .tab-active { 
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-            color: white;
-        }
-
-        .priority-alta { 
-            background: #fee2e2;
-            color: #dc2626;
-            border: 1px solid #fca5a5;
-        }
-        .priority-media { 
-            background: #fef3c7;
-            color: #d97706;
-            border: 1px solid #fcd34d;
-        }
-        .priority-baja { 
-            background: #dcfce7;
-            color: #16a34a;
-            border: 1px solid #86efac;
-        }
-
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1000;
-            max-width: 400px;
-            padding: 16px;
-            border-radius: 12px;
-            color: white;
-            font-weight: 500;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            animation: slideIn 0.3s ease-out;
-        }
-
-        @keyframes slideIn {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-
-        .notification.success { background: linear-gradient(135deg, #10b981, #059669); }
-        .notification.error { background: linear-gradient(135deg, #ef4444, #dc2626); }
-        .notification.info { background: linear-gradient(135deg, #3b82f6, #2563eb); }
-
-        .firestore-status {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            z-index: 1000;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .status-connected {
-            background: linear-gradient(135deg, #10b981, #059669);
-            color: white;
-        }
-
-        .status-connecting {
-            background: linear-gradient(135deg, #f59e0b, #d97706);
-            color: white;
-        }
-
-        .status-error {
-            background: linear-gradient(135deg, #ef4444, #dc2626);
-            color: white;
-        }
-
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
-        .spinning {
-            animation: spin 1s linear infinite;
-        }
-
-        .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 2px solid #f3f3f3;
-            border-top: 2px solid #3498db;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
+        .fade-in { animation: fadeIn 0.3s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .slide-in { animation: slideIn 0.3s ease-out; }
+        @keyframes slideIn { from { transform: translateY(-10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     </style>
 </head>
-<body class="min-h-screen">
-    <!-- Firestore Status -->
-    <div id="firestoreStatus" class="firestore-status status-connecting">
-        <span class="spinning">🔄</span>
-        <span>Conectando a Firestore...</span>
-    </div>
-
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
     <!-- Login Screen -->
     <div id="loginScreen" class="min-h-screen flex items-center justify-center p-4">
-        <div class="glass-effect rounded-3xl shadow-2xl p-8 w-full max-w-md">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
             <div class="text-center mb-8">
-                <div class="w-20 h-20 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                    <span class="text-white font-bold text-3xl">🎓</span>
+                <div class="bg-gradient-to-r from-blue-600 to-indigo-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span class="text-white text-2xl font-bold">📚</span>
                 </div>
-                <h1 class="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-2">
-                    Control Académico
-                </h1>
-                <p class="text-gray-600">Sistema con Firestore</p>
-                <div class="mt-2 flex items-center justify-center space-x-2">
-                    <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                    <span class="text-xs text-green-600 font-medium">Conectado a la nube</span>
-                </div>
+                <h1 class="text-2xl font-bold text-gray-800">Sistema Académico</h1>
+                <p class="text-gray-600 mt-2">Ingeniería - DEMO</p>
             </div>
             
             <form id="loginForm" class="space-y-6">
                 <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">📧 Email</label>
-                    <input type="email" id="loginEmail" required 
-                           class="w-full px-4 py-4 bg-white/80 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500"
-                           placeholder="usuario@universidad.edu">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                    <input type="email" id="loginEmail" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="usuario@ejemplo.com" required>
                 </div>
                 
                 <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">🔒 Contraseña</label>
-                    <input type="password" id="loginPassword" required 
-                           class="w-full px-4 py-4 bg-white/80 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500"
-                           placeholder="••••••••">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Contraseña</label>
+                    <input type="password" id="loginPassword" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="••••••••" required>
                 </div>
                 
-                <button type="submit" id="loginBtn" class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-300">
-                    ✨ Iniciar Sesión
+                <button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 rounded-lg font-medium hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 transform hover:scale-105">
+                    Iniciar Sesión
                 </button>
             </form>
-
-            <!-- Demo Credentials -->
-            <div class="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-200">
-                <h4 class="text-sm font-semibold text-blue-900 mb-3">🔑 Usuarios Demo (Firestore):</h4>
-                <div class="space-y-2">
-                    <button onclick="fillLogin('admin@universidad.edu', 'admin123')" class="w-full text-left p-2 bg-white rounded-lg hover:bg-blue-100 transition-colors">
-                        <div class="text-xs font-medium text-purple-800">👑 Administrador</div>
-                        <div class="text-xs text-purple-600">Acceso completo + Firestore</div>
-                    </button>
-                    <button onclick="fillLogin('docente@universidad.edu', 'doc123')" class="w-full text-left p-2 bg-white rounded-lg hover:bg-blue-100 transition-colors">
-                        <div class="text-xs font-medium text-blue-800">👨‍🏫 Docente</div>
-                        <div class="text-xs text-blue-600">Ver mis actividades + Sync</div>
-                    </button>
+            
+            <div class="mt-6 p-4 bg-gray-50 rounded-lg">
+                <p class="text-sm text-gray-600 font-medium mb-2">Cuentas de prueba:</p>
+                <div class="space-y-1 text-xs text-gray-500">
+                    <p><strong>Admin:</strong> admin@universidad.edu / admin123</p>
+                    <p><strong>Docente:</strong> docente@universidad.edu / docente123</p>
                 </div>
-            </div>
-
-            <div class="mt-4 text-center">
-                <p class="text-xs text-gray-500">
-                    🔥 Powered by Firestore - Datos en tiempo real
-                </p>
             </div>
         </div>
     </div>
 
-    <!-- Main App -->
-    <div id="mainApp" class="hidden">
+    <!-- Dashboard -->
+    <div id="dashboard" class="hidden min-h-screen">
         <!-- Header -->
-        <header class="glass-effect shadow-xl border-b border-white/20 sticky top-0 z-40">
+        <header class="bg-white shadow-sm border-b">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex justify-between items-center py-4">
-                    <div class="flex items-center space-x-4">
-                        <div class="w-12 h-12 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl flex items-center justify-center">
-                            <span class="text-white font-bold text-xl">🎓</span>
+                <div class="flex justify-between items-center h-16">
+                    <div class="flex items-center">
+                        <div class="bg-gradient-to-r from-blue-600 to-indigo-600 w-10 h-10 rounded-lg flex items-center justify-center mr-3">
+                            <span class="text-white text-lg font-bold">📚</span>
                         </div>
-                        <div>
-                            <h1 class="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                                Control Académico
-                            </h1>
-                            <p class="text-sm text-gray-600 font-medium">Sistema con Firestore</p>
-                        </div>
+                        <h1 class="text-xl font-semibold text-gray-800">Tablero Académico</h1>
                     </div>
+                    
                     <div class="flex items-center space-x-4">
-                        <div class="text-right">
-                            <p id="userName" class="text-sm font-semibold text-gray-800">Usuario</p>
-                            <p id="userRole" class="text-xs text-gray-600">Rol</p>
-                        </div>
-                        <button onclick="logout()" class="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white px-4 py-2 rounded-xl text-sm font-medium">
-                            🚪 Salir
+                        <span id="userRole" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium"></span>
+                        <span id="userName" class="text-gray-700 font-medium"></span>
+                        <button onclick="logout()" class="text-gray-500 hover:text-gray-700 transition-colors">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                            </svg>
                         </button>
                     </div>
                 </div>
             </div>
         </header>
 
+        <!-- Navigation Tabs -->
+        <div class="bg-white border-b">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <nav class="flex space-x-8">
+                    <button onclick="showTab('software')" class="tab-btn py-4 px-1 border-b-2 font-medium text-sm transition-colors border-blue-500 text-blue-600" data-tab="software">
+                        💻 Ingeniería en Software
+                    </button>
+                    <button onclick="showTab('mecatronica')" class="tab-btn py-4 px-1 border-b-2 font-medium text-sm transition-colors border-transparent text-gray-500 hover:text-gray-700" data-tab="mecatronica">
+                        ⚙️ Ingeniería en Mecatrónica
+                    </button>
+                </nav>
+            </div>
+        </div>
+
         <!-- Main Content -->
         <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <!-- Navigation Tabs -->
-            <div class="glass-effect rounded-2xl mb-8 overflow-hidden">
-                <div id="navigationTabs" class="flex bg-gradient-to-r from-gray-50/50 to-white/50">
-                    <button id="dashboardTab" class="tab-button flex-1 px-8 py-5 text-sm font-semibold transition-all" onclick="showTab('dashboard')">
-                        <div class="flex items-center justify-center space-x-2">
-                            <span>📊</span>
-                            <span>Dashboard</span>
-                        </div>
-                    </button>
-                    <button id="teachersTab" class="tab-button flex-1 px-8 py-5 text-sm font-semibold transition-all" onclick="showTab('teachers')">
-                        <div class="flex items-center justify-center space-x-2">
-                            <span>👥</span>
-                            <span>Docentes</span>
-                        </div>
-                    </button>
-                    <button id="activitiesTab" class="tab-button flex-1 px-8 py-5 text-sm font-semibold transition-all" onclick="showTab('activities')">
-                        <div class="flex items-center justify-center space-x-2">
-                            <span>📋</span>
-                            <span>Actividades</span>
-                        </div>
-                    </button>
+            <!-- Admin Controls -->
+            <div id="adminControls" class="hidden mb-8">
+                <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+                    <h2 class="text-lg font-semibold text-gray-800 mb-4">Panel de Administración</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <button onclick="showModal('addTeacher')" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                            ➕ Agregar Docente
+                        </button>
+                        <button onclick="showModal('addActivity')" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                            📋 Nueva Actividad
+                        </button>
+                        <button onclick="syncDatabase()" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+                            🔄 Sincronizar BD
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            <!-- Tab Content -->
-            <div id="tabContent" class="glass-effect rounded-xl p-6">
-                <!-- Dashboard Section -->
-                <div id="dashboardSection" class="tab-content">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-6">Dashboard General</h3>
-                    
-                    <!-- Stats Cards -->
-                    <div class="grid md:grid-cols-3 gap-6 mb-8">
-                        <div class="bg-white rounded-2xl p-6 shadow-lg">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <p class="text-blue-600 text-sm font-medium">Total Docentes</p>
-                                    <p id="totalTeachers" class="text-3xl font-bold text-blue-900">
-                                        <span class="loading"></span>
-                                    </p>
+            <!-- Career Sections -->
+            <div id="softwareSection" class="career-section">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Teachers -->
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-semibold text-gray-800">Docentes - Software</h3>
+                            <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm" id="softwareTeacherCount">3</span>
+                        </div>
+                        <div id="softwareTeachers" class="space-y-3">
+                            <div class="teacher-card flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                <div class="flex items-center">
+                                    <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-medium">JG</div>
+                                    <div class="ml-3">
+                                        <p class="font-medium text-gray-800">Dr. Juan García</p>
+                                        <p class="text-sm text-gray-600">juan.garcia@universidad.edu</p>
+                                    </div>
                                 </div>
-                                <div class="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center">
-                                    <span class="text-blue-600 text-2xl">👥</span>
+                                <div class="admin-only hidden flex space-x-2">
+                                    <button onclick="editTeacher('juan.garcia')" class="text-blue-600 hover:text-blue-800">✏️</button>
+                                    <button onclick="deleteTeacher('juan.garcia')" class="text-red-600 hover:text-red-800">🗑️</button>
                                 </div>
                             </div>
-                        </div>
-                        
-                        <div class="bg-white rounded-2xl p-6 shadow-lg">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <p class="text-green-600 text-sm font-medium">Actividades</p>
-                                    <p id="totalActivities" class="text-3xl font-bold text-green-900">
-                                        <span class="loading"></span>
-                                    </p>
+                            <div class="teacher-card flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                <div class="flex items-center">
+                                    <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-white font-medium">ML</div>
+                                    <div class="ml-3">
+                                        <p class="font-medium text-gray-800">Dra. María López</p>
+                                        <p class="text-sm text-gray-600">maria.lopez@universidad.edu</p>
+                                    </div>
                                 </div>
-                                <div class="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center">
-                                    <span class="text-green-600 text-2xl">📋</span>
+                                <div class="admin-only hidden flex space-x-2">
+                                    <button onclick="editTeacher('maria.lopez')" class="text-blue-600 hover:text-blue-800">✏️</button>
+                                    <button onclick="deleteTeacher('maria.lopez')" class="text-red-600 hover:text-red-800">🗑️</button>
                                 </div>
                             </div>
-                        </div>
-                        
-                        <div class="bg-white rounded-2xl p-6 shadow-lg">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <p class="text-purple-600 text-sm font-medium">Completadas</p>
-                                    <p id="completedActivities" class="text-3xl font-bold text-purple-900">
-                                        <span class="loading"></span>
-                                    </p>
+                            <div class="teacher-card flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                <div class="flex items-center">
+                                    <div class="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center text-white font-medium">CR</div>
+                                    <div class="ml-3">
+                                        <p class="font-medium text-gray-800">Ing. Carlos Rodríguez</p>
+                                        <p class="text-sm text-gray-600">carlos.rodriguez@universidad.edu</p>
+                                    </div>
                                 </div>
-                                <div class="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center">
-                                    <span class="text-purple-600 text-2xl">✅</span>
+                                <div class="admin-only hidden flex space-x-2">
+                                    <button onclick="editTeacher('carlos.rodriguez')" class="text-blue-600 hover:text-blue-800">✏️</button>
+                                    <button onclick="deleteTeacher('carlos.rodriguez')" class="text-red-600 hover:text-red-800">🗑️</button>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Recent Activities -->
-                    <div class="bg-white rounded-2xl p-6 shadow-lg">
-                        <h4 class="text-lg font-semibold text-gray-900 mb-4">Actividades Recientes</h4>
-                        <div id="recentActivitiesList" class="space-y-3">
-                            <div class="text-center py-4">
-                                <span class="loading"></span>
-                                <p class="text-gray-500 mt-2">Cargando actividades...</p>
+                    <!-- Activities -->
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-semibold text-gray-800">Actividades - Software</h3>
+                            <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-sm" id="softwareActivityCount">4</span>
+                        </div>
+                        <div id="softwareActivities" class="space-y-3">
+                            <div class="activity-card p-3 bg-gray-50 rounded-lg">
+                                <div class="flex justify-between items-start mb-2">
+                                    <h4 class="font-medium text-gray-800">Planificación Semestral</h4>
+                                    <div class="admin-only hidden flex space-x-2">
+                                        <button onclick="editActivity('plan-semestral')" class="text-blue-600 hover:text-blue-800">✏️</button>
+                                        <button onclick="deleteActivity('plan-semestral')" class="text-red-600 hover:text-red-800">🗑️</button>
+                                    </div>
+                                </div>
+                                <p class="text-sm text-gray-600 mb-2">Entrega del plan de estudios semestral</p>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs text-gray-500">Vence: 15 Ene 2024</span>
+                                    <div class="w-24 bg-gray-200 rounded-full h-2">
+                                        <div class="bg-green-500 h-2 rounded-full" style="width: 85%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="activity-card p-3 bg-gray-50 rounded-lg">
+                                <div class="flex justify-between items-start mb-2">
+                                    <h4 class="font-medium text-gray-800">Evaluaciones Parciales</h4>
+                                    <div class="admin-only hidden flex space-x-2">
+                                        <button onclick="editActivity('eval-parciales')" class="text-blue-600 hover:text-blue-800">✏️</button>
+                                        <button onclick="deleteActivity('eval-parciales')" class="text-red-600 hover:text-red-800">🗑️</button>
+                                    </div>
+                                </div>
+                                <p class="text-sm text-gray-600 mb-2">Aplicación de exámenes parciales</p>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs text-gray-500">Vence: 20 Feb 2024</span>
+                                    <div class="w-24 bg-gray-200 rounded-full h-2">
+                                        <div class="bg-yellow-500 h-2 rounded-full" style="width: 60%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="activity-card p-3 bg-gray-50 rounded-lg">
+                                <div class="flex justify-between items-start mb-2">
+                                    <h4 class="font-medium text-gray-800">Proyecto Final</h4>
+                                    <div class="admin-only hidden flex space-x-2">
+                                        <button onclick="editActivity('proyecto-final')" class="text-blue-600 hover:text-blue-800">✏️</button>
+                                        <button onclick="deleteActivity('proyecto-final')" class="text-red-600 hover:text-red-800">🗑️</button>
+                                    </div>
+                                </div>
+                                <p class="text-sm text-gray-600 mb-2">Desarrollo y presentación del proyecto integrador</p>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs text-gray-500">Vence: 15 May 2024</span>
+                                    <div class="w-24 bg-gray-200 rounded-full h-2">
+                                        <div class="bg-red-500 h-2 rounded-full" style="width: 25%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="activity-card p-3 bg-gray-50 rounded-lg">
+                                <div class="flex justify-between items-start mb-2">
+                                    <h4 class="font-medium text-gray-800">Capacitación Docente</h4>
+                                    <div class="admin-only hidden flex space-x-2">
+                                        <button onclick="editActivity('capacitacion')" class="text-blue-600 hover:text-blue-800">✏️</button>
+                                        <button onclick="deleteActivity('capacitacion')" class="text-red-600 hover:text-red-800">🗑️</button>
+                                    </div>
+                                </div>
+                                <p class="text-sm text-gray-600 mb-2">Asistencia a talleres de actualización pedagógica</p>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs text-gray-500">Vence: 30 Mar 2024</span>
+                                    <div class="w-24 bg-gray-200 rounded-full h-2">
+                                        <div class="bg-blue-500 h-2 rounded-full" style="width: 40%"></div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <!-- Teachers Section -->
-                <div id="teachersSection" class="tab-content hidden">
-                    <div class="flex justify-between items-center mb-6">
-                        <h3 class="text-lg font-semibold text-gray-900">Gestión de Docentes</h3>
-                        <button id="addTeacherBtn" onclick="showAddTeacherModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg">
-                            + Agregar Docente
-                        </button>
+            <div id="mecatronicaSection" class="career-section hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Teachers -->
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-semibold text-gray-800">Docentes - Mecatrónica</h3>
+                            <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm" id="mecatronicaTeacherCount">2</span>
+                        </div>
+                        <div id="mecatronicaTeachers" class="space-y-3">
+                            <div class="teacher-card flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                <div class="flex items-center">
+                                    <div class="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center text-white font-medium">AS</div>
+                                    <div class="ml-3">
+                                        <p class="font-medium text-gray-800">Dr. Ana Sánchez</p>
+                                        <p class="text-sm text-gray-600">ana.sanchez@universidad.edu</p>
+                                    </div>
+                                </div>
+                                <div class="admin-only hidden flex space-x-2">
+                                    <button onclick="editTeacher('ana.sanchez')" class="text-blue-600 hover:text-blue-800">✏️</button>
+                                    <button onclick="deleteTeacher('ana.sanchez')" class="text-red-600 hover:text-red-800">🗑️</button>
+                                </div>
+                            </div>
+                            <div class="teacher-card flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                <div class="flex items-center">
+                                    <div class="w-10 h-10 bg-teal-500 rounded-full flex items-center justify-center text-white font-medium">PM</div>
+                                    <div class="ml-3">
+                                        <p class="font-medium text-gray-800">Ing. Pedro Martínez</p>
+                                        <p class="text-sm text-gray-600">pedro.martinez@universidad.edu</p>
+                                    </div>
+                                </div>
+                                <div class="admin-only hidden flex space-x-2">
+                                    <button onclick="editTeacher('pedro.martinez')" class="text-blue-600 hover:text-blue-800">✏️</button>
+                                    <button onclick="deleteTeacher('pedro.martinez')" class="text-red-600 hover:text-red-800">🗑️</button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    
-                    <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
-                        <table class="w-full">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nombre</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Especialidad</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actividades</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody id="teachersTableBody" class="bg-white divide-y divide-gray-200">
-                                <tr>
-                                    <td colspan="5" class="px-6 py-4 text-center">
-                                        <span class="loading"></span>
-                                        <p class="text-gray-500 mt-2">Cargando docentes...</p>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
 
-                <!-- Activities Section -->
-                <div id="activitiesSection" class="tab-content hidden">
-                    <div class="flex justify-between items-center mb-6">
-                        <h3 class="text-lg font-semibold text-gray-900">Gestión de Actividades</h3>
-                        <button id="addActivityBtn" onclick="showAddActivityModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg">
-                            + Nueva Actividad
-                        </button>
-                    </div>
-                    
-                    <div id="activitiesGrid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        <div class="col-span-full text-center py-12">
-                            <span class="loading"></span>
-                            <p class="text-gray-500 mt-2">Cargando actividades...</p>
+                    <!-- Activities -->
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-semibold text-gray-800">Actividades - Mecatrónica</h3>
+                            <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-sm" id="mecatronicaActivityCount">3</span>
+                        </div>
+                        <div id="mecatronicaActivities" class="space-y-3">
+                            <div class="activity-card p-3 bg-gray-50 rounded-lg">
+                                <div class="flex justify-between items-start mb-2">
+                                    <h4 class="font-medium text-gray-800">Laboratorio de Robótica</h4>
+                                    <div class="admin-only hidden flex space-x-2">
+                                        <button onclick="editActivity('lab-robotica')" class="text-blue-600 hover:text-blue-800">✏️</button>
+                                        <button onclick="deleteActivity('lab-robotica')" class="text-red-600 hover:text-red-800">🗑️</button>
+                                    </div>
+                                </div>
+                                <p class="text-sm text-gray-600 mb-2">Prácticas de programación de robots industriales</p>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs text-gray-500">Vence: 10 Feb 2024</span>
+                                    <div class="w-24 bg-gray-200 rounded-full h-2">
+                                        <div class="bg-green-500 h-2 rounded-full" style="width: 90%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="activity-card p-3 bg-gray-50 rounded-lg">
+                                <div class="flex justify-between items-start mb-2">
+                                    <h4 class="font-medium text-gray-800">Diseño CAD</h4>
+                                    <div class="admin-only hidden flex space-x-2">
+                                        <button onclick="editActivity('diseno-cad')" class="text-blue-600 hover:text-blue-800">✏️</button>
+                                        <button onclick="deleteActivity('diseno-cad')" class="text-red-600 hover:text-red-800">🗑️</button>
+                                    </div>
+                                </div>
+                                <p class="text-sm text-gray-600 mb-2">Modelado 3D de componentes mecánicos</p>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs text-gray-500">Vence: 25 Mar 2024</span>
+                                    <div class="w-24 bg-gray-200 rounded-full h-2">
+                                        <div class="bg-yellow-500 h-2 rounded-full" style="width: 55%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="activity-card p-3 bg-gray-50 rounded-lg">
+                                <div class="flex justify-between items-start mb-2">
+                                    <h4 class="font-medium text-gray-800">Automatización Industrial</h4>
+                                    <div class="admin-only hidden flex space-x-2">
+                                        <button onclick="editActivity('automatizacion')" class="text-blue-600 hover:text-blue-800">✏️</button>
+                                        <button onclick="deleteActivity('automatizacion')" class="text-red-600 hover:text-red-800">🗑️</button>
+                                    </div>
+                                </div>
+                                <p class="text-sm text-gray-600 mb-2">Implementación de sistemas de control PLC</p>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs text-gray-500">Vence: 5 Jun 2024</span>
+                                    <div class="w-24 bg-gray-200 rounded-full h-2">
+                                        <div class="bg-red-500 h-2 rounded-full" style="width: 15%"></div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -361,34 +338,41 @@
         </main>
     </div>
 
+    <!-- Modals -->
     <!-- Add Teacher Modal -->
-    <div id="addTeacherModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
-        <div class="bg-white rounded-xl p-8 w-full max-w-md mx-4">
-            <h3 class="text-xl font-bold text-gray-900 mb-6">Agregar Nuevo Docente</h3>
-            
+    <div id="addTeacherModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md slide-in">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-gray-800">Agregar Docente</h3>
+                <button onclick="closeModal('addTeacher')" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
             <form id="addTeacherForm" class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Nombre Completo</label>
-                    <input type="text" id="teacherName" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nombre Completo</label>
+                    <input type="text" id="teacherName" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
                 </div>
-                
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                    <input type="email" id="teacherEmail" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input type="email" id="teacherEmail" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
                 </div>
-                
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Especialidad</label>
-                    <input type="text" id="teacherSpecialty" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Carrera</label>
+                    <select id="teacherCareer" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
+                        <option value="">Seleccionar carrera</option>
+                        <option value="software">Ingeniería en Software</option>
+                        <option value="mecatronica">Ingeniería en Mecatrónica</option>
+                    </select>
                 </div>
-                
-                <div class="flex justify-end space-x-3 pt-4">
-                    <button type="button" onclick="closeAddTeacherModal()" class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg">
+                <div class="flex space-x-3 pt-4">
+                    <button type="button" onclick="closeModal('addTeacher')" class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
                         Cancelar
                     </button>
-                    <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg">
-                        <span id="addTeacherBtnText">Agregar</span>
-                        <span id="addTeacherLoader" class="loading hidden"></span>
+                    <button type="submit" class="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                        Agregar
                     </button>
                 </div>
             </form>
@@ -396,730 +380,299 @@
     </div>
 
     <!-- Add Activity Modal -->
-    <div id="addActivityModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
-        <div class="bg-white rounded-xl p-8 w-full max-w-md mx-4">
-            <h3 class="text-xl font-bold text-gray-900 mb-6">Nueva Actividad</h3>
-            
+    <div id="addActivityModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md slide-in">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-gray-800">Nueva Actividad</h3>
+                <button onclick="closeModal('addActivity')" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
             <form id="addActivityForm" class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Título</label>
-                    <input type="text" id="activityTitle" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Título</label>
+                    <input type="text" id="activityTitle" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
                 </div>
-                
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Descripción</label>
-                    <textarea id="activityDescription" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" rows="3"></textarea>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+                    <textarea id="activityDescription" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" rows="3" required></textarea>
                 </div>
-                
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Asignar a Docente</label>
-                    <select id="activityTeacher" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
-                        <option value="">Seleccionar docente...</option>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Fecha de Vencimiento</label>
+                    <input type="date" id="activityDueDate" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Carrera</label>
+                    <select id="activityCareer" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
+                        <option value="">Seleccionar carrera</option>
+                        <option value="software">Ingeniería en Software</option>
+                        <option value="mecatronica">Ingeniería en Mecatrónica</option>
                     </select>
                 </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Fecha Límite</label>
-                    <input type="date" id="activityDeadline" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Prioridad</label>
-                    <select id="activityPriority" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
-                        <option value="baja">Baja</option>
-                        <option value="media">Media</option>
-                        <option value="alta">Alta</option>
-                    </select>
-                </div>
-                
-                <div class="flex justify-end space-x-3 pt-4">
-                    <button type="button" onclick="closeAddActivityModal()" class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg">
+                <div class="flex space-x-3 pt-4">
+                    <button type="button" onclick="closeModal('addActivity')" class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
                         Cancelar
                     </button>
-                    <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg">
-                        <span id="addActivityBtnText">Crear</span>
-                        <span id="addActivityLoader" class="loading hidden"></span>
+                    <button type="submit" class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        Crear
                     </button>
                 </div>
             </form>
         </div>
     </div>
 
+    <!-- Database Status -->
+    <div id="dbStatus" class="hidden fixed bottom-4 right-4 bg-white rounded-lg shadow-lg p-4 border-l-4 border-green-500">
+        <div class="flex items-center">
+            <div class="flex-shrink-0">
+                <svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                </svg>
+            </div>
+            <div class="ml-3">
+                <p class="text-sm font-medium text-gray-900">Base de datos sincronizada</p>
+                <p class="text-sm text-gray-500">Google Sheets conectado</p>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // Firebase Configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyDGpS6g8nJZ8X2M5vL9wQ3pR7tY4uI6oP2",
-            authDomain: "sistema-academico-2024.firebaseapp.com",
-            projectId: "sistema-academico-2024",
-            storageBucket: "sistema-academico-2024.appspot.com",
-            messagingSenderId: "123456789012",
-            appId: "1:123456789012:web:abcdef123456789012345"
-        };
-
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-
-        // Global variables
         let currentUser = null;
-        let currentTab = 'dashboard';
-        let teachers = [];
-        let activities = [];
-        let unsubscribeTeachers = null;
-        let unsubscribeActivities = null;
+        let currentRole = null;
+        let currentTab = 'software';
 
-        // Initialize app
-        document.addEventListener('DOMContentLoaded', function() {
-            initializeFirestore();
-            checkAuthStatus();
-            setupEventListeners();
+        // Login functionality
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            // Demo authentication
+            if (email === 'admin@universidad.edu' && password === 'admin123') {
+                login('Administrador', 'admin', email);
+            } else if (email === 'docente@universidad.edu' && password === 'docente123') {
+                login('Docente', 'teacher', email);
+            } else {
+                alert('Credenciales incorrectas. Use las cuentas de prueba mostradas.');
+            }
         });
 
-        async function initializeFirestore() {
-            try {
-                updateFirestoreStatus('connecting');
-                
-                // Test connection
-                await db.collection('test').limit(1).get();
-                
-                updateFirestoreStatus('connected');
-                showNotification('Conectado a Firestore exitosamente', 'success');
-                
-                // Initialize demo data if needed
-                await initializeDemoData();
-                
-            } catch (error) {
-                console.error('Error connecting to Firestore:', error);
-                updateFirestoreStatus('error');
-                showNotification('Error conectando a Firestore: ' + error.message, 'error');
-            }
-        }
-
-        function updateFirestoreStatus(status) {
-            const statusElement = document.getElementById('firestoreStatus');
+        function login(name, role, email) {
+            currentUser = name;
+            currentRole = role;
             
-            statusElement.classList.remove('status-connected', 'status-connecting', 'status-error');
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('dashboard').classList.remove('hidden');
+            document.getElementById('userName').textContent = name;
+            document.getElementById('userRole').textContent = role === 'admin' ? 'Administrador' : 'Docente';
             
-            switch (status) {
-                case 'connected':
-                    statusElement.classList.add('status-connected');
-                    statusElement.innerHTML = '<span>🔥</span><span>Firestore Conectado</span>';
-                    break;
-                case 'connecting':
-                    statusElement.classList.add('status-connecting');
-                    statusElement.innerHTML = '<span class="spinning">🔄</span><span>Conectando a Firestore...</span>';
-                    break;
-                case 'error':
-                    statusElement.classList.add('status-error');
-                    statusElement.innerHTML = '<span>❌</span><span>Error de Conexión</span>';
-                    break;
+            if (role === 'admin') {
+                document.getElementById('adminControls').classList.remove('hidden');
+                document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
             }
-        }
-
-        async function initializeDemoData() {
-            try {
-                // Check if users exist
-                const usersSnapshot = await db.collection('users').get();
-                if (usersSnapshot.empty) {
-                    // Create demo users
-                    await db.collection('users').doc('admin@universidad.edu').set({
-                        name: 'Administrador',
-                        email: 'admin@universidad.edu',
-                        password: 'admin123', // In production, this should be hashed
-                        role: 'admin',
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-
-                    await db.collection('users').doc('docente@universidad.edu').set({
-                        name: 'Dr. Juan Pérez',
-                        email: 'docente@universidad.edu',
-                        password: 'doc123', // In production, this should be hashed
-                        role: 'teacher',
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-
-                    console.log('Demo users created');
-                }
-
-                // Check if teachers exist
-                const teachersSnapshot = await db.collection('teachers').get();
-                if (teachersSnapshot.empty) {
-                    // Create demo teachers
-                    await db.collection('teachers').add({
-                        name: 'Dr. Juan Pérez',
-                        email: 'docente@universidad.edu',
-                        specialty: 'Desarrollo Web',
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-
-                    await db.collection('teachers').add({
-                        name: 'Dra. Ana García',
-                        email: 'ana.garcia@universidad.edu',
-                        specialty: 'Base de Datos',
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-
-                    console.log('Demo teachers created');
-                }
-
-                // Check if activities exist
-                const activitiesSnapshot = await db.collection('activities').get();
-                if (activitiesSnapshot.empty) {
-                    // Create demo activities
-                    await db.collection('activities').add({
-                        title: 'Actualización Plan de Estudios',
-                        description: 'Revisar contenidos de desarrollo web',
-                        teacherEmail: 'docente@universidad.edu',
-                        deadline: '2024-02-15',
-                        priority: 'alta',
-                        completed: false,
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-
-                    await db.collection('activities').add({
-                        title: 'Capacitación React',
-                        description: 'Completar curso de React',
-                        teacherEmail: 'docente@universidad.edu',
-                        deadline: '2024-02-28',
-                        priority: 'media',
-                        completed: true,
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-
-                    await db.collection('activities').add({
-                        title: 'Revisión Exámenes',
-                        description: 'Revisar exámenes finales',
-                        teacherEmail: 'ana.garcia@universidad.edu',
-                        deadline: '2024-03-10',
-                        priority: 'alta',
-                        completed: false,
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-
-                    console.log('Demo activities created');
-                }
-
-            } catch (error) {
-                console.error('Error initializing demo data:', error);
-            }
-        }
-
-        function setupEventListeners() {
-            document.getElementById('loginForm').addEventListener('submit', handleLogin);
-            document.getElementById('addTeacherForm').addEventListener('submit', handleAddTeacher);
-            document.getElementById('addActivityForm').addEventListener('submit', handleAddActivity);
-        }
-
-        // Authentication
-        function checkAuthStatus() {
-            const savedUser = localStorage.getItem('currentUser');
-            if (savedUser) {
-                currentUser = JSON.parse(savedUser);
-                showMainApp();
-            } else {
-                showLoginScreen();
-            }
-        }
-
-        async function handleLogin(e) {
-            e.preventDefault();
             
-            const loginBtn = document.getElementById('loginBtn');
-            const originalText = loginBtn.innerHTML;
-            loginBtn.innerHTML = '<span class="loading"></span> Verificando...';
-            loginBtn.disabled = true;
-            
-            try {
-                const email = document.getElementById('loginEmail').value.trim();
-                const password = document.getElementById('loginPassword').value;
-
-                // Check user in Firestore
-                const userDoc = await db.collection('users').doc(email).get();
-                
-                if (!userDoc.exists) {
-                    throw new Error('Usuario no encontrado');
-                }
-
-                const userData = userDoc.data();
-                
-                if (userData.password !== password) {
-                    throw new Error('Contraseña incorrecta');
-                }
-
-                currentUser = {
-                    email: email,
-                    name: userData.name,
-                    role: userData.role
-                };
-
-                localStorage.setItem('currentUser', JSON.stringify(currentUser));
-                showMainApp();
-                showNotification(`¡Bienvenido ${userData.name}!`, 'success');
-
-            } catch (error) {
-                console.error('Login error:', error);
-                showNotification(error.message, 'error');
-            } finally {
-                loginBtn.innerHTML = originalText;
-                loginBtn.disabled = false;
-            }
+            showTab('software');
         }
 
         function logout() {
-            // Unsubscribe from real-time listeners
-            if (unsubscribeTeachers) unsubscribeTeachers();
-            if (unsubscribeActivities) unsubscribeActivities();
-            
-            localStorage.removeItem('currentUser');
             currentUser = null;
-            teachers = [];
-            activities = [];
-            showLoginScreen();
-            showNotification('Sesión cerrada', 'info');
-        }
-
-        function fillLogin(email, password) {
-            document.getElementById('loginEmail').value = email;
-            document.getElementById('loginPassword').value = password;
-        }
-
-        function showLoginScreen() {
+            currentRole = null;
+            document.getElementById('dashboard').classList.add('hidden');
             document.getElementById('loginScreen').classList.remove('hidden');
-            document.getElementById('mainApp').classList.add('hidden');
-        }
-
-        function showMainApp() {
-            document.getElementById('loginScreen').classList.add('hidden');
-            document.getElementById('mainApp').classList.remove('hidden');
+            document.getElementById('adminControls').classList.add('hidden');
+            document.querySelectorAll('.admin-only').forEach(el => el.classList.add('hidden'));
             
-            updateUserInterface();
-            setupRealtimeListeners();
-            showTab('dashboard');
+            // Reset form
+            document.getElementById('loginForm').reset();
         }
 
-        function updateUserInterface() {
-            document.getElementById('userName').textContent = currentUser.name;
-            document.getElementById('userRole').textContent = currentUser.role === 'admin' ? 'Administrador' : 'Docente';
-            
-            // Hide admin-only buttons for teachers
-            if (currentUser.role === 'teacher') {
-                document.getElementById('addTeacherBtn').style.display = 'none';
-                document.getElementById('addActivityBtn').style.display = 'none';
-                document.getElementById('teachersTab').style.display = 'none';
-            }
-        }
-
-        // Real-time listeners
-        function setupRealtimeListeners() {
-            // Listen to teachers collection
-            unsubscribeTeachers = db.collection('teachers')
-                .orderBy('createdAt', 'desc')
-                .onSnapshot((snapshot) => {
-                    teachers = [];
-                    snapshot.forEach((doc) => {
-                        teachers.push({
-                            id: doc.id,
-                            ...doc.data()
-                        });
-                    });
-                    
-                    if (currentTab === 'teachers') renderTeachers();
-                    if (currentTab === 'dashboard') renderDashboard();
-                }, (error) => {
-                    console.error('Error listening to teachers:', error);
-                    showNotification('Error sincronizando docentes', 'error');
-                });
-
-            // Listen to activities collection
-            unsubscribeActivities = db.collection('activities')
-                .orderBy('createdAt', 'desc')
-                .onSnapshot((snapshot) => {
-                    activities = [];
-                    snapshot.forEach((doc) => {
-                        activities.push({
-                            id: doc.id,
-                            ...doc.data()
-                        });
-                    });
-                    
-                    if (currentTab === 'activities') renderActivities();
-                    if (currentTab === 'dashboard') renderDashboard();
-                }, (error) => {
-                    console.error('Error listening to activities:', error);
-                    showNotification('Error sincronizando actividades', 'error');
-                });
-        }
-
-        // Tab navigation
         function showTab(tab) {
-            // Hide all tab contents
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-            
-            // Remove active class from all tabs
-            document.querySelectorAll('.tab-button').forEach(el => {
-                el.classList.remove('tab-active', 'text-white');
-                el.classList.add('text-gray-700');
-            });
-            
-            // Show selected tab content
-            document.getElementById(tab + 'Section').classList.remove('hidden');
-            
-            // Add active class to selected tab
-            const activeTab = document.getElementById(tab + 'Tab');
-            if (activeTab) {
-                activeTab.classList.add('tab-active', 'text-white');
-                activeTab.classList.remove('text-gray-700');
-            }
-            
             currentTab = tab;
             
-            // Load content based on tab
-            if (tab === 'dashboard') renderDashboard();
-            if (tab === 'teachers') renderTeachers();
-            if (tab === 'activities') renderActivities();
+            // Update tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                if (btn.dataset.tab === tab) {
+                    btn.classList.add('border-blue-500', 'text-blue-600');
+                    btn.classList.remove('border-transparent', 'text-gray-500');
+                } else {
+                    btn.classList.remove('border-blue-500', 'text-blue-600');
+                    btn.classList.add('border-transparent', 'text-gray-500');
+                }
+            });
+            
+            // Show/hide sections
+            document.querySelectorAll('.career-section').forEach(section => {
+                section.classList.add('hidden');
+            });
+            document.getElementById(tab + 'Section').classList.remove('hidden');
         }
 
-        // Render functions
-        function renderDashboard() {
-            const totalTeachersCount = teachers.length;
-            const totalActivitiesCount = activities.length;
-            const completedActivitiesCount = activities.filter(a => a.completed).length;
-            
-            document.getElementById('totalTeachers').textContent = totalTeachersCount;
-            document.getElementById('totalActivities').textContent = totalActivitiesCount;
-            document.getElementById('completedActivities').textContent = completedActivitiesCount;
-
-            renderRecentActivities();
+        function showModal(modalType) {
+            document.getElementById(modalType + 'Modal').classList.remove('hidden');
         }
 
-        function renderRecentActivities() {
-            const recentList = document.getElementById('recentActivitiesList');
-            const recentActivities = activities.slice(0, 5);
-            
-            if (recentActivities.length === 0) {
-                recentList.innerHTML = `
-                    <div class="text-center py-4">
-                        <p class="text-gray-500">No hay actividades recientes</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            recentList.innerHTML = recentActivities.map(activity => {
-                const teacher = teachers.find(t => t.email === activity.teacherEmail);
-                return `
-                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <div>
-                            <h5 class="font-medium text-gray-900">${activity.title}</h5>
-                            <p class="text-sm text-gray-600">Asignado a: ${teacher ? teacher.name : activity.teacherEmail}</p>
-                        </div>
-                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full priority-${activity.priority}">
-                            ${activity.priority.toUpperCase()}
-                        </span>
-                    </div>
-                `;
-            }).join('');
+        function closeModal(modalType) {
+            document.getElementById(modalType + 'Modal').classList.add('hidden');
         }
 
-        function renderTeachers() {
-            const tbody = document.getElementById('teachersTableBody');
-            
-            if (teachers.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="5" class="px-6 py-4 text-center text-gray-500">
-                            No hay docentes registrados
-                        </td>
-                    </tr>
-                `;
-                return;
-            }
-            
-            tbody.innerHTML = teachers.map(teacher => {
-                const teacherActivities = activities.filter(a => a.teacherEmail === teacher.email);
-                const completedCount = teacherActivities.filter(a => a.completed).length;
-                
-                return `
-                    <tr class="hover:bg-gray-50">
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="flex items-center">
-                                <div class="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center mr-3">
-                                    <span class="text-indigo-600 text-sm font-medium">${teacher.name.charAt(0)}</span>
-                                </div>
-                                <span class="text-sm font-medium text-gray-900">${teacher.name}</span>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${teacher.email}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${teacher.specialty}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                            ${completedCount}/${teacherActivities.length} completadas
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <button onclick="editTeacher('${teacher.id}')" class="text-indigo-600 hover:text-indigo-900 mr-3">Editar</button>
-                            <button onclick="deleteTeacher('${teacher.id}')" class="text-red-600 hover:text-red-900">Eliminar</button>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
-        }
-
-        function renderActivities() {
-            const grid = document.getElementById('activitiesGrid');
-            let displayActivities = activities;
-            
-            // Filter activities for teachers (only their own)
-            if (currentUser.role === 'teacher') {
-                displayActivities = activities.filter(a => a.teacherEmail === currentUser.email);
-            }
-            
-            if (displayActivities.length === 0) {
-                grid.innerHTML = `
-                    <div class="col-span-full text-center py-12">
-                        <div class="text-gray-400 text-6xl mb-4">📋</div>
-                        <h3 class="text-lg font-medium text-gray-900 mb-2">No hay actividades</h3>
-                        <p class="text-gray-500">No se encontraron actividades</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            grid.innerHTML = displayActivities.map(activity => {
-                const teacher = teachers.find(t => t.email === activity.teacherEmail);
-                
-                return `
-                    <div class="bg-white rounded-2xl p-6 shadow-lg ${activity.completed ? 'border-2 border-green-200' : ''}">
-                        <div class="mb-4">
-                            <div class="flex justify-between items-start mb-3">
-                                <h4 class="font-bold text-gray-900 text-lg">${activity.title}</h4>
-                                <span class="inline-flex px-3 py-1 text-xs font-bold rounded-full priority-${activity.priority}">
-                                    ${activity.priority.toUpperCase()}
-                                </span>
-                            </div>
-                            <p class="text-gray-600 text-sm">${activity.description}</p>
-                        </div>
-                        
-                        <div class="bg-blue-50 rounded-xl p-4 mb-4">
-                            <p class="text-blue-800 font-semibold text-sm">Asignado a: ${teacher ? teacher.name : activity.teacherEmail}</p>
-                        </div>
-                        
-                        <div class="flex items-center justify-between mb-4">
-                            <span class="text-gray-700 font-medium">Fecha límite:</span>
-                            <span class="font-bold text-gray-800">${activity.deadline}</span>
-                        </div>
-                        
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center space-x-2">
-                                <input type="checkbox" ${activity.completed ? 'checked' : ''} 
-                                       onchange="toggleActivity('${activity.id}')" 
-                                       class="w-4 h-4 text-green-600 rounded">
-                                <span class="text-sm text-gray-700">Completada</span>
-                            </div>
-                            
-                            ${currentUser.role === 'admin' ? `
-                                <div class="flex items-center space-x-2">
-                                    <button onclick="editActivity('${activity.id}')" 
-                                            class="text-indigo-600 hover:text-indigo-800 text-sm">
-                                        ✏️ Editar
-                                    </button>
-                                    <button onclick="deleteActivity('${activity.id}')" 
-                                            class="text-red-600 hover:text-red-800 text-sm">
-                                        🗑️ Eliminar
-                                    </button>
-                                </div>
-                            ` : ''}
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        // Modal functions
-        function showAddTeacherModal() {
-            document.getElementById('addTeacherModal').classList.remove('hidden');
-        }
-
-        function closeAddTeacherModal() {
-            document.getElementById('addTeacherModal').classList.add('hidden');
-            document.getElementById('addTeacherForm').reset();
-        }
-
-        async function showAddActivityModal() {
-            // Populate teacher select
-            const teacherSelect = document.getElementById('activityTeacher');
-            teacherSelect.innerHTML = '<option value="">Seleccionar docente...</option>' +
-                teachers.map(teacher => `<option value="${teacher.email}">${teacher.name}</option>`).join('');
-            
-            document.getElementById('addActivityModal').classList.remove('hidden');
-        }
-
-        function closeAddActivityModal() {
-            document.getElementById('addActivityModal').classList.add('hidden');
-            document.getElementById('addActivityForm').reset();
-        }
-
-        // CRUD operations
-        async function handleAddTeacher(e) {
+        // Add Teacher Form
+        document.getElementById('addTeacherForm').addEventListener('submit', function(e) {
             e.preventDefault();
+            const name = document.getElementById('teacherName').value;
+            const email = document.getElementById('teacherEmail').value;
+            const career = document.getElementById('teacherCareer').value;
             
-            const btnText = document.getElementById('addTeacherBtnText');
-            const loader = document.getElementById('addTeacherLoader');
+            // Simulate adding to database
+            addTeacherToUI(name, email, career);
+            closeModal('addTeacher');
+            this.reset();
             
-            btnText.classList.add('hidden');
-            loader.classList.remove('hidden');
-            
-            try {
-                const name = document.getElementById('teacherName').value;
-                const email = document.getElementById('teacherEmail').value;
-                const specialty = document.getElementById('teacherSpecialty').value;
-                
-                await db.collection('teachers').add({
-                    name: name,
-                    email: email,
-                    specialty: specialty,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                
-                closeAddTeacherModal();
-                showNotification('Docente agregado exitosamente', 'success');
-                
-            } catch (error) {
-                console.error('Error adding teacher:', error);
-                showNotification('Error al agregar docente: ' + error.message, 'error');
-            } finally {
-                btnText.classList.remove('hidden');
-                loader.classList.add('hidden');
-            }
-        }
+            // Show success message
+            showNotification('Docente agregado exitosamente');
+        });
 
-        async function handleAddActivity(e) {
+        // Add Activity Form
+        document.getElementById('addActivityForm').addEventListener('submit', function(e) {
             e.preventDefault();
+            const title = document.getElementById('activityTitle').value;
+            const description = document.getElementById('activityDescription').value;
+            const dueDate = document.getElementById('activityDueDate').value;
+            const career = document.getElementById('activityCareer').value;
             
-            const btnText = document.getElementById('addActivityBtnText');
-            const loader = document.getElementById('addActivityLoader');
+            // Simulate adding to database
+            addActivityToUI(title, description, dueDate, career);
+            closeModal('addActivity');
+            this.reset();
             
-            btnText.classList.add('hidden');
-            loader.classList.remove('hidden');
+            // Show success message
+            showNotification('Actividad creada exitosamente');
+        });
+
+        function addTeacherToUI(name, email, career) {
+            const initials = name.split(' ').map(n => n[0]).join('').toUpperCase();
+            const colors = ['bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-orange-500', 'bg-teal-500'];
+            const color = colors[Math.floor(Math.random() * colors.length)];
             
-            try {
-                const title = document.getElementById('activityTitle').value;
-                const description = document.getElementById('activityDescription').value;
-                const teacherEmail = document.getElementById('activityTeacher').value;
-                const deadline = document.getElementById('activityDeadline').value;
-                const priority = document.getElementById('activityPriority').value;
-                
-                await db.collection('activities').add({
-                    title: title,
-                    description: description,
-                    teacherEmail: teacherEmail,
-                    deadline: deadline,
-                    priority: priority,
-                    completed: false,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                
-                closeAddActivityModal();
-                showNotification('Actividad creada exitosamente', 'success');
-                
-            } catch (error) {
-                console.error('Error adding activity:', error);
-                showNotification('Error al crear actividad: ' + error.message, 'error');
-            } finally {
-                btnText.classList.remove('hidden');
-                loader.classList.add('hidden');
+            const teacherHTML = `
+                <div class="teacher-card flex items-center justify-between p-3 bg-gray-50 rounded-lg fade-in">
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 ${color} rounded-full flex items-center justify-center text-white font-medium">${initials}</div>
+                        <div class="ml-3">
+                            <p class="font-medium text-gray-800">${name}</p>
+                            <p class="text-sm text-gray-600">${email}</p>
+                        </div>
+                    </div>
+                    <div class="admin-only flex space-x-2">
+                        <button onclick="editTeacher('${email}')" class="text-blue-600 hover:text-blue-800">✏️</button>
+                        <button onclick="deleteTeacher('${email}')" class="text-red-600 hover:text-red-800">🗑️</button>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById(career + 'Teachers').insertAdjacentHTML('beforeend', teacherHTML);
+            
+            // Update counter
+            const counter = document.getElementById(career + 'TeacherCount');
+            counter.textContent = parseInt(counter.textContent) + 1;
+        }
+
+        function addActivityToUI(title, description, dueDate, career) {
+            const date = new Date(dueDate);
+            const formattedDate = date.toLocaleDateString('es-ES', { 
+                day: 'numeric', 
+                month: 'short', 
+                year: 'numeric' 
+            });
+            
+            const colors = ['bg-green-500', 'bg-yellow-500', 'bg-red-500', 'bg-blue-500'];
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            const progress = Math.floor(Math.random() * 100);
+            
+            const activityHTML = `
+                <div class="activity-card p-3 bg-gray-50 rounded-lg fade-in">
+                    <div class="flex justify-between items-start mb-2">
+                        <h4 class="font-medium text-gray-800">${title}</h4>
+                        <div class="admin-only flex space-x-2">
+                            <button onclick="editActivity('${title.toLowerCase().replace(/\s+/g, '-')}')" class="text-blue-600 hover:text-blue-800">✏️</button>
+                            <button onclick="deleteActivity('${title.toLowerCase().replace(/\s+/g, '-')}')" class="text-red-600 hover:text-red-800">🗑️</button>
+                        </div>
+                    </div>
+                    <p class="text-sm text-gray-600 mb-2">${description}</p>
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs text-gray-500">Vence: ${formattedDate}</span>
+                        <div class="w-24 bg-gray-200 rounded-full h-2">
+                            <div class="${color} h-2 rounded-full" style="width: ${progress}%"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById(career + 'Activities').insertAdjacentHTML('beforeend', activityHTML);
+            
+            // Update counter
+            const counter = document.getElementById(career + 'ActivityCount');
+            counter.textContent = parseInt(counter.textContent) + 1;
+        }
+
+        function editTeacher(email) {
+            showNotification('Función de edición - Conectaría con Google Sheets');
+        }
+
+        function deleteTeacher(email) {
+            if (confirm('¿Está seguro de eliminar este docente?')) {
+                showNotification('Docente eliminado - Se actualizaría Google Sheets');
             }
         }
 
-        async function toggleActivity(activityId) {
-            try {
-                const activity = activities.find(a => a.id === activityId);
-                if (activity) {
-                    await db.collection('activities').doc(activityId).update({
-                        completed: !activity.completed
-                    });
-                    
-                    showNotification(
-                        !activity.completed ? 'Actividad completada' : 'Actividad marcada como pendiente', 
-                        'success'
-                    );
-                }
-            } catch (error) {
-                console.error('Error toggling activity:', error);
-                showNotification('Error al actualizar actividad: ' + error.message, 'error');
+        function editActivity(id) {
+            showNotification('Función de edición - Conectaría con Google Sheets');
+        }
+
+        function deleteActivity(id) {
+            if (confirm('¿Está seguro de eliminar esta actividad?')) {
+                showNotification('Actividad eliminada - Se actualizaría Google Sheets');
             }
         }
 
-        async function editTeacher(teacherId) {
-            const teacher = teachers.find(t => t.id === teacherId);
-            if (teacher) {
-                const newName = prompt('Nuevo nombre:', teacher.name);
-                if (newName && newName !== teacher.name) {
-                    try {
-                        await db.collection('teachers').doc(teacherId).update({
-                            name: newName
-                        });
-                        showNotification('Docente actualizado', 'success');
-                    } catch (error) {
-                        console.error('Error updating teacher:', error);
-                        showNotification('Error al actualizar docente: ' + error.message, 'error');
-                    }
-                }
-            }
+        function syncDatabase() {
+            showNotification('Sincronizando con Google Sheets...');
+            
+            // Simulate sync process
+            setTimeout(() => {
+                document.getElementById('dbStatus').classList.remove('hidden');
+                setTimeout(() => {
+                    document.getElementById('dbStatus').classList.add('hidden');
+                }, 3000);
+            }, 1000);
         }
 
-        async function deleteTeacher(teacherId) {
-            if (confirm('¿Estás seguro de eliminar este docente?')) {
-                try {
-                    await db.collection('teachers').doc(teacherId).delete();
-                    showNotification('Docente eliminado', 'success');
-                } catch (error) {
-                    console.error('Error deleting teacher:', error);
-                    showNotification('Error al eliminar docente: ' + error.message, 'error');
-                }
-            }
-        }
-
-        async function editActivity(activityId) {
-            const activity = activities.find(a => a.id === activityId);
-            if (activity) {
-                const newTitle = prompt('Nuevo título:', activity.title);
-                if (newTitle && newTitle !== activity.title) {
-                    try {
-                        await db.collection('activities').doc(activityId).update({
-                            title: newTitle
-                        });
-                        showNotification('Actividad actualizada', 'success');
-                    } catch (error) {
-                        console.error('Error updating activity:', error);
-                        showNotification('Error al actualizar actividad: ' + error.message, 'error');
-                    }
-                }
-            }
-        }
-
-        async function deleteActivity(activityId) {
-            if (confirm('¿Estás seguro de eliminar esta actividad?')) {
-                try {
-                    await db.collection('activities').doc(activityId).delete();
-                    showNotification('Actividad eliminada', 'success');
-                } catch (error) {
-                    console.error('Error deleting activity:', error);
-                    showNotification('Error al eliminar actividad: ' + error.message, 'error');
-                }
-            }
-        }
-
-        // Utility functions
-        function showNotification(message, type = 'info') {
+        function showNotification(message) {
+            // Create notification element
             const notification = document.createElement('div');
-            notification.className = `notification ${type}`;
+            notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 slide-in';
             notification.textContent = message;
             
             document.body.appendChild(notification);
             
+            // Remove after 3 seconds
             setTimeout(() => {
                 notification.remove();
-            }, 4000);
+            }, 3000);
         }
+
+        // Close modals when clicking outside
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('fixed') && e.target.classList.contains('inset-0')) {
+                const modals = ['addTeacherModal', 'addActivityModal'];
+                modals.forEach(modalId => {
+                    if (!document.getElementById(modalId).classList.contains('hidden')) {
+                        document.getElementById(modalId).classList.add('hidden');
+                    }
+                });
+            }
+        });
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'975ea74d34e92df4',t:'MTc1NjMzMDA1Mi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'975eb588d4bdf7d7',t:'MTc1NjMzMDYzNS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
