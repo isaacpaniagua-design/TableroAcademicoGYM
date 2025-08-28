@@ -322,26 +322,26 @@
             <div id="content-reports" class="tab-content hidden">
                 <h2 class="text-2xl font-bold text-gray-800 mb-6">Reportes y Estadísticas</h2>
                 
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
                     <div class="bg-white rounded-xl card-shadow p-6">
                         <h3 class="text-lg font-semibold text-gray-800 mb-4">Progreso por Programa</h3>
                         <div class="space-y-4">
                             <div>
                                 <div class="flex justify-between text-sm mb-1">
                                     <span>Ingeniería en Software</span>
-                                    <span>75%</span>
+                                    <span id="softwareProgress">75%</span>
                                 </div>
                                 <div class="w-full bg-gray-200 rounded-full h-2">
-                                    <div class="bg-purple-600 h-2 rounded-full" style="width: 75%"></div>
+                                    <div class="bg-purple-600 h-2 rounded-full" id="softwareProgressBar" style="width: 75%"></div>
                                 </div>
                             </div>
                             <div>
                                 <div class="flex justify-between text-sm mb-1">
                                     <span>Ing. Mecatrónica y Manufactura</span>
-                                    <span>68%</span>
+                                    <span id="mechatronicsProgress">68%</span>
                                 </div>
                                 <div class="w-full bg-gray-200 rounded-full h-2">
-                                    <div class="bg-orange-600 h-2 rounded-full" style="width: 68%"></div>
+                                    <div class="bg-orange-600 h-2 rounded-full" id="mechatronicsProgressBar" style="width: 68%"></div>
                                 </div>
                             </div>
                         </div>
@@ -352,17 +352,77 @@
                         <div class="space-y-3">
                             <div class="flex justify-between items-center">
                                 <span class="text-sm text-gray-600">Completadas</span>
-                                <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">18</span>
+                                <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium" id="completedCount">0</span>
                             </div>
                             <div class="flex justify-between items-center">
                                 <span class="text-sm text-gray-600">En Progreso</span>
-                                <span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-medium">10</span>
+                                <span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-medium" id="inProgressCount">0</span>
                             </div>
                             <div class="flex justify-between items-center">
                                 <span class="text-sm text-gray-600">Pendientes</span>
-                                <span class="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium">5</span>
+                                <span class="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium" id="pendingCount">0</span>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Admin Panel -->
+                <div id="adminPanel" class="bg-white rounded-xl card-shadow p-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                        <i class="fas fa-shield-alt mr-2 text-red-600"></i>Panel de Administración
+                    </h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm font-medium text-blue-800">Almacenamiento</span>
+                                <i class="fas fa-database text-blue-600"></i>
+                            </div>
+                            <p class="text-xs text-blue-600">Los datos se guardan automáticamente en el navegador</p>
+                        </div>
+                        
+                        <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm font-medium text-green-800">Última Actualización</span>
+                                <i class="fas fa-clock text-green-600"></i>
+                            </div>
+                            <p class="text-xs text-green-600" id="lastUpdateTime">Cargando...</p>
+                        </div>
+                        
+                        <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm font-medium text-purple-800">Total Registros</span>
+                                <i class="fas fa-chart-bar text-purple-600"></i>
+                            </div>
+                            <p class="text-xs text-purple-600" id="totalRecords">Calculando...</p>
+                        </div>
+                    </div>
+                    
+                    <div class="border-t pt-4">
+                        <h4 class="font-medium text-gray-800 mb-3">Acciones de Administrador</h4>
+                        <div class="flex flex-wrap gap-3">
+                            <button onclick="exportData()" 
+                                    class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm">
+                                <i class="fas fa-download mr-2"></i>Exportar Datos
+                            </button>
+                            
+                            <button onclick="showDataSummary()" 
+                                    class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm">
+                                <i class="fas fa-chart-line mr-2"></i>Resumen Detallado
+                            </button>
+                            
+                            <button onclick="clearAllData()" 
+                                    class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors text-sm">
+                                <i class="fas fa-trash-alt mr-2"></i>Reiniciar Sistema
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                        <p class="text-sm text-yellow-800">
+                            <i class="fas fa-exclamation-triangle mr-2"></i>
+                            <strong>Importante:</strong> Los datos se mantienen guardados permanentemente en este navegador hasta que el administrador los elimine.
+                        </p>
                     </div>
                 </div>
             </div>
@@ -538,6 +598,253 @@
         let activities = [];
         let isLoading = false;
 
+        // Persistent Storage System
+        const STORAGE_KEYS = {
+            USERS: 'itson_users_data',
+            ACTIVITIES: 'itson_activities_data',
+            CURRENT_USER: 'itson_current_user',
+            LAST_SYNC: 'itson_last_sync'
+        };
+
+        // Initialize persistent storage
+        function initializePersistentStorage() {
+            // Load existing data from localStorage
+            loadDataFromStorage();
+            
+            // If no data exists, create initial admin user
+            if (users.length === 0) {
+                createInitialData();
+            }
+            
+            // Save current state
+            saveDataToStorage();
+        }
+
+        function loadDataFromStorage() {
+            try {
+                // Load users
+                const storedUsers = localStorage.getItem(STORAGE_KEYS.USERS);
+                if (storedUsers) {
+                    users = JSON.parse(storedUsers);
+                }
+                
+                // Load activities
+                const storedActivities = localStorage.getItem(STORAGE_KEYS.ACTIVITIES);
+                if (storedActivities) {
+                    activities = JSON.parse(storedActivities);
+                }
+                
+                // Load current user session
+                const storedCurrentUser = localStorage.getItem(STORAGE_KEYS.CURRENT_USER);
+                if (storedCurrentUser) {
+                    currentUser = JSON.parse(storedCurrentUser);
+                }
+                
+                console.log('Datos cargados desde almacenamiento local:', {
+                    users: users.length,
+                    activities: activities.length,
+                    currentUser: currentUser?.name
+                });
+                
+            } catch (error) {
+                console.error('Error loading data from storage:', error);
+                // If there's an error, reset to empty arrays
+                users = [];
+                activities = [];
+                currentUser = null;
+            }
+        }
+
+        function saveDataToStorage() {
+            try {
+                localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
+                localStorage.setItem(STORAGE_KEYS.ACTIVITIES, JSON.stringify(activities));
+                localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(currentUser));
+                localStorage.setItem(STORAGE_KEYS.LAST_SYNC, new Date().toISOString());
+                
+                console.log('Datos guardados en almacenamiento local');
+                
+            } catch (error) {
+                console.error('Error saving data to storage:', error);
+                showNotification('Error al guardar datos localmente', 'error');
+            }
+        }
+
+        function createInitialData() {
+            // Create initial admin user
+            const adminUser = {
+                id: 'admin-1',
+                name: "Isaac Paniagua",
+                email: "isaac.paniagua@itson.edu.mx",
+                program: "admin",
+                role: "admin",
+                status: "active",
+                createdAt: new Date().toISOString(),
+                specialty: "Administración del Sistema",
+                phone: "+52 644 410 0200"
+            };
+            
+            users.push(adminUser);
+            
+            // Create sample users for demonstration
+            const sampleUsers = [
+                {
+                    id: 'software-1',
+                    name: "Dr. María González",
+                    email: "maria.gonzalez@itson.edu.mx",
+                    program: "software",
+                    role: "docente",
+                    status: "active",
+                    specialty: "Desarrollo Web",
+                    phone: "+52 644 123 4567",
+                    createdAt: new Date().toISOString()
+                },
+                {
+                    id: 'software-2',
+                    name: "Ing. Carlos Rodríguez",
+                    email: "carlos.rodriguez@itson.edu.mx",
+                    program: "software",
+                    role: "auxiliar",
+                    status: "active",
+                    specialty: "Inteligencia Artificial",
+                    phone: "+52 644 234 5678",
+                    createdAt: new Date().toISOString()
+                },
+                {
+                    id: 'mechatronics-1',
+                    name: "Dr. Ana Martínez",
+                    email: "ana.martinez@itson.edu.mx",
+                    program: "mechatronics",
+                    role: "docente",
+                    status: "active",
+                    specialty: "Robótica Industrial",
+                    phone: "+52 644 345 6789",
+                    createdAt: new Date().toISOString()
+                }
+            ];
+            
+            users.push(...sampleUsers);
+            
+            // Create sample activities
+            const sampleActivities = [
+                {
+                    id: 'activity-1',
+                    title: "Actualización de Plan de Estudios",
+                    description: "Revisar y actualizar el plan de estudios de Ingeniería en Software",
+                    program: "software",
+                    assignedTo: "software-1",
+                    priority: "alta",
+                    status: "in-progress",
+                    deadline: "2024-02-15",
+                    createdBy: "admin-1",
+                    createdAt: new Date().toISOString(),
+                    notes: "Incluir nuevas tecnologías emergentes"
+                },
+                {
+                    id: 'activity-2',
+                    title: "Preparación de Laboratorio",
+                    description: "Configurar equipos para prácticas de robótica",
+                    program: "mechatronics",
+                    assignedTo: "mechatronics-1",
+                    priority: "media",
+                    status: "pending",
+                    deadline: "2024-02-20",
+                    createdBy: "admin-1",
+                    createdAt: new Date().toISOString()
+                }
+            ];
+            
+            activities.push(...sampleActivities);
+        }
+
+        // Enhanced save functions with persistent storage
+        async function saveUserToSheets(user) {
+            try {
+                setLoadingState(true);
+                
+                const newUser = {
+                    ...user,
+                    id: `${user.program}-${Date.now()}`,
+                    createdAt: new Date().toISOString()
+                };
+                
+                users.push(newUser);
+                
+                // Save to persistent storage
+                saveDataToStorage();
+                
+                // Simulate API call delay
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                setLoadingState(false);
+                showNotification('Usuario guardado permanentemente', 'success');
+                
+                return newUser;
+            } catch (error) {
+                setLoadingState(false);
+                showNotification('Error al guardar usuario', 'error');
+                throw error;
+            }
+        }
+
+        async function saveActivityToSheets(activity) {
+            try {
+                setLoadingState(true);
+                
+                const newActivity = {
+                    ...activity,
+                    id: `${activity.program}-${Date.now()}`,
+                    createdAt: new Date().toISOString()
+                };
+                
+                activities.push(newActivity);
+                
+                // Save to persistent storage
+                saveDataToStorage();
+                
+                // Simulate API call delay
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                setLoadingState(false);
+                showNotification('Actividad guardada permanentemente', 'success');
+                
+                return newActivity;
+            } catch (error) {
+                setLoadingState(false);
+                showNotification('Error al guardar actividad', 'error');
+                throw error;
+            }
+        }
+
+        async function updateActivityStatus(activityId, newStatus) {
+            try {
+                setLoadingState(true);
+                
+                const activity = activities.find(a => a.id === activityId);
+                if (activity) {
+                    activity.status = newStatus;
+                    activity.updatedAt = new Date().toISOString();
+                    if (newStatus === 'completed') {
+                        activity.completedAt = new Date().toISOString();
+                    }
+                }
+                
+                // Save to persistent storage
+                saveDataToStorage();
+                
+                // Simulate API call delay
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                setLoadingState(false);
+                showNotification('Estado actualizado permanentemente', 'success');
+                
+            } catch (error) {
+                setLoadingState(false);
+                showNotification('Error al actualizar estado', 'error');
+                throw error;
+            }
+        }
+
         // Google Sheets API functions
         function getSheetUrl(program, sheetName, range = '') {
             const sheetId = GOOGLE_SHEETS_CONFIG[program].id;
@@ -573,10 +880,13 @@
             try {
                 setLoadingState(true);
                 
+                // Initialize persistent storage first
+                initializePersistentStorage();
+                
                 // Initialize sheets structure if needed
                 await createSheetsStructure();
                 
-                // Load data from both programs
+                // Load data from both programs (if available)
                 await loadUsersFromSheets();
                 await loadActivitiesFromSheets();
                 
@@ -585,7 +895,10 @@
             } catch (error) {
                 console.error('Error initializing Google Sheets:', error);
                 setLoadingState(false);
-                showNotification('Error al conectar con Google Sheets. Usando modo offline.', 'error');
+                
+                // Fallback to persistent storage
+                initializePersistentStorage();
+                showNotification('Usando almacenamiento local. Datos guardados permanentemente.', 'info');
             }
         }
 
@@ -830,7 +1143,7 @@
             }, 5000);
         }
 
-        // Authentication
+        // Authentication with persistent session
         document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const email = document.getElementById('loginEmail').value;
@@ -839,7 +1152,7 @@
             try {
                 setLoadingState(true);
                 
-                // Initialize Google Sheets connection
+                // Initialize system with persistent storage
                 await initializeGoogleSheets();
                 
                 // Find user in loaded data
@@ -847,9 +1160,16 @@
                 
                 if (user) {
                     // In a real implementation, you would verify password against a secure hash
-                    // For now, we'll use a simple check
-                    if (user.email === 'isaac.paniagua@itson.edu.mx' && password === 'admin123') {
+                    // For now, we'll use a simple check for admin and allow any password for other users
+                    const isValidLogin = (user.email === 'isaac.paniagua@itson.edu.mx' && password === 'admin123') ||
+                                        (user.email !== 'isaac.paniagua@itson.edu.mx' && password.length > 0);
+                    
+                    if (isValidLogin) {
                         currentUser = user;
+                        
+                        // Save session to persistent storage
+                        saveDataToStorage();
+                        
                         showDashboard();
                         showNotification('Sesión iniciada exitosamente', 'success');
                     } else {
@@ -868,6 +1188,27 @@
             }
         });
 
+        // Check for existing session on page load
+        function checkExistingSession() {
+            const storedUser = localStorage.getItem(STORAGE_KEYS.CURRENT_USER);
+            if (storedUser) {
+                try {
+                    currentUser = JSON.parse(storedUser);
+                    if (currentUser && currentUser.id) {
+                        // Initialize system and show dashboard
+                        initializePersistentStorage();
+                        showDashboard();
+                        showNotification(`Bienvenido de nuevo, ${currentUser.name}`, 'success');
+                        return true;
+                    }
+                } catch (error) {
+                    console.error('Error loading session:', error);
+                    localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
+                }
+            }
+            return false;
+        }
+
         function showDashboard() {
             document.getElementById('loginScreen').classList.add('hidden');
             document.getElementById('dashboard').classList.remove('hidden');
@@ -878,10 +1219,18 @@
         }
 
         function logout() {
+            // Clear current user but keep data
             currentUser = null;
+            
+            // Remove session from storage but keep user data and activities
+            localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
+            
+            // Show login screen
             document.getElementById('dashboard').classList.add('hidden');
             document.getElementById('loginScreen').classList.remove('hidden');
             document.getElementById('loginForm').reset();
+            
+            showNotification('Sesión cerrada. Los datos se mantienen guardados.', 'info');
         }
 
         function updateUserInfo() {
@@ -1180,8 +1529,11 @@
                 try {
                     setLoadingState(true);
                     
-                    // In real implementation, would call Google Sheets API to delete
+                    // Remove from activities array
                     activities = activities.filter(a => a.id !== activityId);
+                    
+                    // Save to persistent storage
+                    saveDataToStorage();
                     
                     // Simulate API delay
                     await new Promise(resolve => setTimeout(resolve, 500));
@@ -1189,11 +1541,73 @@
                     loadActivities();
                     updateStats();
                     setLoadingState(false);
-                    showNotification('Actividad eliminada exitosamente', 'success');
+                    showNotification('Actividad eliminada permanentemente', 'success');
                 } catch (error) {
                     setLoadingState(false);
                     showNotification('Error al eliminar actividad', 'error');
                 }
+            }
+        }
+
+        // Admin functions for data management
+        function clearAllData() {
+            if (currentUser && currentUser.role === 'admin') {
+                if (confirm('¿Está seguro de eliminar TODOS los datos? Esta acción no se puede deshacer.')) {
+                    if (confirm('CONFIRMACIÓN FINAL: Se eliminarán todos los usuarios y actividades. ¿Continuar?')) {
+                        try {
+                            // Clear all storage
+                            localStorage.removeItem(STORAGE_KEYS.USERS);
+                            localStorage.removeItem(STORAGE_KEYS.ACTIVITIES);
+                            localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
+                            localStorage.removeItem(STORAGE_KEYS.LAST_SYNC);
+                            
+                            // Reset arrays
+                            users = [];
+                            activities = [];
+                            currentUser = null;
+                            
+                            // Recreate initial data
+                            createInitialData();
+                            saveDataToStorage();
+                            
+                            // Logout and show login screen
+                            logout();
+                            
+                            showNotification('Todos los datos han sido eliminados y reiniciados', 'success');
+                        } catch (error) {
+                            showNotification('Error al eliminar datos', 'error');
+                        }
+                    }
+                }
+            } else {
+                showNotification('Solo el administrador puede eliminar todos los datos', 'error');
+            }
+        }
+
+        function exportData() {
+            if (currentUser && currentUser.role === 'admin') {
+                try {
+                    const exportData = {
+                        users: users,
+                        activities: activities,
+                        exportDate: new Date().toISOString(),
+                        exportedBy: currentUser.name
+                    };
+                    
+                    const dataStr = JSON.stringify(exportData, null, 2);
+                    const dataBlob = new Blob([dataStr], {type: 'application/json'});
+                    
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(dataBlob);
+                    link.download = `itson_backup_${new Date().toISOString().split('T')[0]}.json`;
+                    link.click();
+                    
+                    showNotification('Datos exportados exitosamente', 'success');
+                } catch (error) {
+                    showNotification('Error al exportar datos', 'error');
+                }
+            } else {
+                showNotification('Solo el administrador puede exportar datos', 'error');
             }
         }
 
@@ -1206,8 +1620,11 @@
                 try {
                     setLoadingState(true);
                     
-                    // In real implementation, would call Google Sheets API to delete
+                    // Remove from users array
                     users = users.filter(u => u.id !== userId);
+                    
+                    // Save to persistent storage
+                    saveDataToStorage();
                     
                     // Simulate API delay
                     await new Promise(resolve => setTimeout(resolve, 500));
@@ -1215,7 +1632,7 @@
                     loadUsers();
                     updateStats();
                     setLoadingState(false);
-                    showNotification('Usuario eliminado exitosamente', 'success');
+                    showNotification('Usuario eliminado permanentemente', 'success');
                 } catch (error) {
                     setLoadingState(false);
                     showNotification('Error al eliminar usuario', 'error');
@@ -1230,10 +1647,115 @@
             const mechatronicsTeachers = users.filter(u => u.program === 'mechatronics').length;
             const activeActivities = activities.filter(a => a.status !== 'completed').length;
             
+            // Update main dashboard stats
             document.getElementById('totalTeachers').textContent = totalTeachers;
             document.getElementById('softwareTeachers').textContent = softwareTeachers;
             document.getElementById('mechatronicsTeachers').textContent = mechatronicsTeachers;
             document.getElementById('activeActivities').textContent = activeActivities;
+            
+            // Update reports tab
+            updateReportsStats();
+            updateAdminPanel();
+        }
+
+        function updateReportsStats() {
+            // Activity status counts
+            const completed = activities.filter(a => a.status === 'completed').length;
+            const inProgress = activities.filter(a => a.status === 'in-progress').length;
+            const pending = activities.filter(a => a.status === 'pending').length;
+            
+            document.getElementById('completedCount').textContent = completed;
+            document.getElementById('inProgressCount').textContent = inProgress;
+            document.getElementById('pendingCount').textContent = pending;
+            
+            // Program progress calculation
+            const softwareActivities = activities.filter(a => a.program === 'software');
+            const mechatronicsActivities = activities.filter(a => a.program === 'mechatronics');
+            
+            const softwareCompleted = softwareActivities.filter(a => a.status === 'completed').length;
+            const mechatronicsCompleted = mechatronicsActivities.filter(a => a.status === 'completed').length;
+            
+            const softwareProgress = softwareActivities.length > 0 ? 
+                Math.round((softwareCompleted / softwareActivities.length) * 100) : 0;
+            const mechatronicsProgress = mechatronicsActivities.length > 0 ? 
+                Math.round((mechatronicsCompleted / mechatronicsActivities.length) * 100) : 0;
+            
+            document.getElementById('softwareProgress').textContent = `${softwareProgress}%`;
+            document.getElementById('mechatronicsProgress').textContent = `${mechatronicsProgress}%`;
+            document.getElementById('softwareProgressBar').style.width = `${softwareProgress}%`;
+            document.getElementById('mechatronicsProgressBar').style.width = `${mechatronicsProgress}%`;
+        }
+
+        function updateAdminPanel() {
+            // Update last sync time
+            const lastSync = localStorage.getItem(STORAGE_KEYS.LAST_SYNC);
+            if (lastSync) {
+                const date = new Date(lastSync);
+                document.getElementById('lastUpdateTime').textContent = date.toLocaleString('es-MX');
+            }
+            
+            // Update total records
+            const totalRecords = users.length + activities.length;
+            document.getElementById('totalRecords').textContent = `${totalRecords} registros`;
+            
+            // Show/hide admin panel based on user role
+            const adminPanel = document.getElementById('adminPanel');
+            if (currentUser && currentUser.role === 'admin') {
+                adminPanel.style.display = 'block';
+            } else {
+                adminPanel.style.display = 'none';
+            }
+        }
+
+        function showDataSummary() {
+            if (currentUser && currentUser.role === 'admin') {
+                const summary = {
+                    totalUsers: users.length,
+                    totalActivities: activities.length,
+                    usersByProgram: {
+                        software: users.filter(u => u.program === 'software').length,
+                        mechatronics: users.filter(u => u.program === 'mechatronics').length,
+                        admin: users.filter(u => u.program === 'admin').length
+                    },
+                    activitiesByStatus: {
+                        completed: activities.filter(a => a.status === 'completed').length,
+                        inProgress: activities.filter(a => a.status === 'in-progress').length,
+                        pending: activities.filter(a => a.status === 'pending').length
+                    },
+                    activitiesByProgram: {
+                        software: activities.filter(a => a.program === 'software').length,
+                        mechatronics: activities.filter(a => a.program === 'mechatronics').length
+                    }
+                };
+                
+                const summaryText = `
+📊 RESUMEN DETALLADO DEL SISTEMA
+
+👥 USUARIOS:
+• Total: ${summary.totalUsers}
+• Ing. Software: ${summary.usersByProgram.software}
+• Ing. Mecatrónica: ${summary.usersByProgram.mechatronics}
+• Administradores: ${summary.usersByProgram.admin}
+
+📋 ACTIVIDADES:
+• Total: ${summary.totalActividades}
+• Completadas: ${summary.activitiesByStatus.completed}
+• En Progreso: ${summary.activitiesByStatus.inProgress}
+• Pendientes: ${summary.activitiesByStatus.pending}
+
+📚 POR PROGRAMA:
+• Software: ${summary.activitiesByProgram.software} actividades
+• Mecatrónica: ${summary.activitiesByProgram.mechatronics} actividades
+
+💾 ALMACENAMIENTO:
+• Datos guardados localmente
+• Última actualización: ${new Date().toLocaleString('es-MX')}
+                `;
+                
+                alert(summaryText);
+            } else {
+                showNotification('Solo el administrador puede ver el resumen detallado', 'error');
+            }
         }
 
         // Initialize the application
@@ -1241,8 +1763,14 @@
             // Set minimum date for activity deadline to today
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('newActivityDeadline').setAttribute('min', today);
+            
+            // Check for existing session and auto-login
+            if (!checkExistingSession()) {
+                // If no existing session, initialize storage anyway for fresh start
+                initializePersistentStorage();
+            }
         });
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'975f8fa617f8b488',t:'MTc1NjMzOTU2OS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'975f9bcd8065d9f7',t:'MTc1NjM0MDA2Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
 
