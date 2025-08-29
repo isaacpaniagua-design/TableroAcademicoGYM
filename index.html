@@ -1166,1598 +1166,182 @@
         </form>
       </div>
     </div>
-
     <script>
-              // 🔗 CONFIGURACIÓN REAL CON GOOGLE SHEETS
-              // =======================================
+      // ===========================================================================
+      // EDUCONTROL PRO - CLIENT-SIDE JAVASCRIPT LOGIC
+      // Versión: 0.3
+      // Autor: Programadora Web Senior
+      // ===========================================================================
 
-              let GOOGLE_SCRIPT_URL = null;
-              let currentUser = null;
-              let currentCareer = 'software';
-              let cachedData = {
-                  software: { users: [], activities: [], teachers: [], progress: [] },
-                  mecatronica: { users: [], activities: [], teachers: [], progress: [] }
-              };
+      // ---------------------------------------------------------------------------
+      // 1. GESTIÓN DEL ESTADO DE LA APLICACIÓN
+      // ---------------------------------------------------------------------------
+      // Objeto 'app' para centralizar el estado y la lógica de la aplicación.
+      const app = {
+        // Estado inicial de la aplicación
+        state: {
+          isLoggedIn: false, // ¿El usuario está autenticado?
+          currentUser: null, // Datos del usuario actual (nombre, rol, etc.)
+          selectedCareer: null, // Carrera seleccionada ('software' o 'mecatronica')
+          isLoading: false, // ¿Hay alguna operación en curso?
+          currentView: "login", // Vista actual ('login', 'dashboard', 'users', etc.)
+        },
 
-              let notifications = [];
-              let syncInterval = null;
-              let syncFrequency = 30000; // 30 segundos por defecto
-              let lastSyncTime = {};
-              let retryAttempts = 0;
-              let maxRetryAttempts = 3;
-              let isOnline = navigator.onLine;
+        // Almacén de selectores del DOM para fácil acceso y mantenimiento.
+        selectors: {
+          // Pantalla de Login
+          loginSection: document.getElementById("login-section"),
+          loginForm: document.getElementById("login-form"),
+          careerSelect: document.getElementById("career-select"),
+          emailInput: document.getElementById("email-input"),
+          passwordInput: document.getElementById("password-input"),
+          loginSpinner: document.getElementById("login-spinner"),
+          loginButtonText: document.getElementById("login-button-text"),
 
-              // ============================================================================
-              // CONFIGURACIÓN AUTOMÁTICA DE GOOGLE SHEETS
-              // ============================================================================
+          // Dashboard Principal
+          appSection: document.getElementById("app-section"),
+          sidebar: document.getElementById("sidebar"),
+          mainContent: document.getElementById("main-content"),
+          userNameDisplay: document.getElementById("user-name-display"),
+          userRoleDisplay: document.getElementById("user-role-display"),
 
-              /**
-               * Configura automáticamente la conexión con Google Sheets
-               */
-              async function setupGoogleSheetsConnection() {
-                  // Si ya está configurado, no hacer nada
-                  if (GOOGLE_SCRIPT_URL) return true;
+          // Notificaciones
+          notificationContainer: document.getElementById(
+            "notification-container"
+          ),
+        },
 
-                  // Mostrar instrucciones para configurar Google Sheets
-                  const setupModal = createSetupModal();
-                  document.body.appendChild(setupModal);
+        // ---------------------------------------------------------------------------
+        // 2. FUNCIÓN DE INICIALIZACIÓN
+        // ---------------------------------------------------------------------------
+        // Se ejecuta cuando el DOM está completamente cargado.
+        init() {
+          console.log("EduControl Pro v0.3 inicializado.");
+          this.addEventListeners();
+          // Podríamos añadir aquí una función que verifique si ya existe una sesión activa.
+        },
 
-                  return new Promise((resolve) => {
-                      window.completeGoogleSheetsSetup = (url) => {
-                          if (!url || !url.includes('script.google.com')) {
-                              showNotification('Por favor ingresa una URL válida de Google Apps Script', 'error');
-                              return;
-                          }
+        // ---------------------------------------------------------------------------
+        // 3. MANEJADORES DE EVENTOS
+        // ---------------------------------------------------------------------------
+        addEventListeners() {
+          // Manejar el envío del formulario de login
+          this.selectors.loginForm.addEventListener("submit", (e) => {
+            e.preventDefault(); // Evita que la página se recargue
+            this.handleLogin();
+          });
 
-                          GOOGLE_SCRIPT_URL = url;
-                          setupModal.remove();
-                          updateConnectionStatus('connected');
-                          showNotification('¡Conexión con Google Sheets configurada exitosamente!', 'success');
-                          resolve(true);
-                      };
+          // Aquí añadiremos más event listeners para los botones del sidebar, modales, etc.
+        },
 
-                      window.skipGoogleSheetsSetup = () => {
-                          setupModal.remove();
-                          showNotification('Configuración omitida. Configúrala más tarde desde el botón verde.', 'warning');
-                          resolve(false);
-                      };
-                  });
-              }
+        // ---------------------------------------------------------------------------
+        // 4. LÓGICA DE AUTENTICACIÓN Y COMUNICACIÓN
+        // ---------------------------------------------------------------------------
+        handleLogin() {
+          const email = this.selectors.emailInput.value;
+          const password = this.selectors.passwordInput.value;
+          const career = this.selectors.careerSelect.value;
 
-              /**
-               * Crea el modal de configuración de Google Sheets
-               */
-              function createSetupModal() {
-                  const modal = document.createElement('div');
-                  modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
-                  modal.innerHTML = `
-                      <div class="bg-white rounded-xl p-8 w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto">
-                          <div class="text-center mb-6">
-                              <div class="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                                  <i class="fas fa-table text-white text-2xl"></i>
-                              </div>
-                              <h2 class="text-2xl font-bold text-gray-800">Configurar Google Sheets Real</h2>
-                              <p class="text-gray-600 mt-2">Conecta tu sistema con Google Sheets para almacenamiento real y funcional</p>
-                          </div>
+          if (!email || !password || !career) {
+            this.showNotification(
+              "Por favor, completa todos los campos.",
+              "error"
+            );
+            return;
+          }
 
-                          <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                              <!-- Columna izquierda: Instrucciones -->
-                              <div class="space-y-6">
-                                  <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                                      <h3 class="font-semibold text-blue-800 mb-3 flex items-center">
-                                          <i class="fas fa-table mr-2"></i>Paso 1: Crear Hojas de Google Sheets
-                                      </h3>
-                                      <p class="text-blue-700 text-sm mb-3">Crea dos hojas de Google Sheets nuevas (o usa las existentes):</p>
-                                      <div class="space-y-3 text-sm">
-                                          <div class="bg-white p-3 rounded border">
-                                              <div class="flex items-center justify-between mb-2">
-                                                  <strong class="text-indigo-800">🎓 Ingeniería en Software</strong>
-                                                  <button onclick="window.open('https://docs.google.com/spreadsheets/d/11DL5I9Zcxm-SdQ9cXRAO-j_InMYHs36qZOk6QRIVMKI/edit', '_blank')" class="text-xs bg-indigo-100 text-indigo-800 px-2 py-1 rounded">Ver Ejemplo</button>
-                                              </div>
-                                              <code class="text-xs bg-gray-100 px-2 py-1 rounded block">ID: 11DL5I9Zcxm-SdQ9cXRAO-j_InMYHs36qZOk6QRIVMKI</code>
-                                          </div>
-                                          <div class="bg-white p-3 rounded border">
-                                              <div class="flex items-center justify-between mb-2">
-                                                  <strong class="text-emerald-800">⚙️ Ingeniería en Mecatrónica</strong>
-                                                  <button onclick="window.open('https://docs.google.com/spreadsheets/d/1hO1kMdw7LDlXePyjJRj4d4dd-v7cQ1dm8TCkU7izqR8/edit', '_blank')" class="text-xs bg-emerald-100 text-emerald-800 px-2 py-1 rounded">Ver Ejemplo</button>
-                                              </div>
-                                              <code class="text-xs bg-gray-100 px-2 py-1 rounded block">ID: 1hO1kMdw7LDlXePyjJRj4d4dd-v7cQ1dm8TCkU7izqR8</code>
-                                          </div>
-                                      </div>
-                                      <p class="text-blue-600 text-xs mt-3">💡 Puedes usar tus propias hojas cambiando los IDs en el código del Apps Script</p>
-                                  </div>
+          // Actualizar la UI para mostrar que estamos procesando el login
+          this.setLoading(true);
+          this.state.selectedCareer = career; // Guardamos la carrera seleccionada
 
-                                  <div class="bg-green-50 border border-green-200 rounded-lg p-4">
-                                      <h3 class="font-semibold text-green-800 mb-3 flex items-center">
-                                          <i class="fas fa-code mr-2"></i>Paso 2: Crear Google Apps Script
-                                      </h3>
-                                      <ol class="text-green-700 text-sm space-y-2 list-decimal list-inside">
-                                          <li>Ve a <a href="https://script.google.com" target="_blank" class="underline font-medium">script.google.com</a></li>
-                                          <li>Haz clic en "Nuevo proyecto"</li>
-                                          <li>Borra el código por defecto</li>
-                                          <li>Pega el código de la derecha →</li>
-                                          <li>Guarda el proyecto (Ctrl+S)</li>
-                                          <li>Haz clic en "Implementar" → "Nueva implementación"</li>
-                                          <li>Tipo: "Aplicación web"</li>
-                                          <li>Ejecutar como: "Yo"</li>
-                                          <li>Acceso: "Cualquier persona"</li>
-                                          <li>Copia la URL del Web App</li>
-                                      </ol>
-                                  </div>
+          // Llamada al backend de Google Apps Script
+          google.script.run
+            .withSuccessHandler(this.onLoginSuccess.bind(this))
+            .withFailureHandler(this.onLoginFailure.bind(this))
+            .userLogin(email, password, career); // Esta función 'userLogin' la crearemos en Código.gs
+        },
 
-                                  <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                                      <h3 class="font-semibold text-yellow-800 mb-2 flex items-center">
-                                          <i class="fas fa-link mr-2"></i>Paso 3: Conectar Sistema
-                                      </h3>
-                                      <div>
-                                          <label class="block text-sm font-medium text-gray-700 mb-2">URL de tu Google Apps Script Web App:</label>
-                                          <input type="url" id="googleScriptUrl" class="w-full px-4 py-2 border border-gray-300 rounded-lg" placeholder="https://script.google.com/macros/s/.../exec">
-                                          <p class="text-xs text-gray-500 mt-1">Pega aquí la URL que obtienes al implementar tu Web App</p>
-                                      </div>
-                                  </div>
-                              </div>
+        onLoginSuccess(user) {
+          this.setLoading(false);
 
-                              <!-- Columna derecha: Código -->
-                              <div class="space-y-4">
-                                  <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                                      <div class="flex items-center justify-between mb-3">
-                                          <h3 class="font-semibold text-gray-800 flex items-center">
-                                              <i class="fas fa-file-code mr-2"></i>Código para Google Apps Script
-                                          </h3>
-                                          <button onclick="copyCodeToClipboard()" class="text-xs bg-blue-100 text-blue-800 px-3 py-1 rounded hover:bg-blue-200">
-                                              <i class="fas fa-copy mr-1"></i>Copiar
-                                          </button>
-                                      </div>
-                                      <textarea readonly id="googleAppsScriptCode" class="w-full h-96 text-xs bg-white border rounded p-3 font-mono resize-none" onclick="this.select()">
-      // EduControl Pro - Google Apps Script Real
-      // ========================================
+          if (user && user.isLoggedIn) {
+            this.state.isLoggedIn = true;
+            this.state.currentUser = user;
+            this.showNotification(`Bienvenido, ${user.name}.`, "success");
 
-      function doPost(e) {
-        try {
-          const data = JSON.parse(e.postData.contents);
-          const { action, career, type, payload, userId } = data;
+            // Actualizar la UI y mostrar el dashboard
+            this.selectors.loginSection.classList.add("hidden");
+            this.selectors.appSection.classList.remove("hidden");
+            this.selectors.userNameDisplay.textContent = user.name;
+            this.selectors.userRoleDisplay.textContent = user.role;
 
-          // IDs de las hojas de cálculo (puedes cambiar estos por los tuyos)
-          const SHEET_IDS = {
-            software: '11DL5I9Zcxm-SdQ9cXRAO-j_InMYHs36qZOk6QRIVMKI',
-            mecatronica: '1hO1kMdw7LDlXePyjJRj4d4dd-v7cQ1dm8TCkU7izqR8'
+            // Cargar datos iniciales del dashboard (lo implementaremos a continuación)
+            this.loadDashboardData();
+          } else {
+            // El backend no devolvió un error, pero el login falló (credenciales incorrectas)
+            this.onLoginFailure({
+              message: "El correo electrónico o la contraseña son incorrectos.",
+            });
+          }
+        },
+
+        onLoginFailure(error) {
+          this.setLoading(false);
+          this.showNotification(
+            error.message || "Ocurrió un error inesperado.",
+            "error"
+          );
+        },
+
+        // ---------------------------------------------------------------------------
+        // 5. FUNCIONES DE UTILIDAD DE LA UI
+        // ---------------------------------------------------------------------------
+
+        setLoading(isLoading) {
+          this.state.isLoading = isLoading;
+          if (isLoading) {
+            this.selectors.loginSpinner.classList.remove("hidden");
+            this.selectors.loginButtonText.textContent = "Verificando...";
+            this.selectors.loginForm.querySelector("button").disabled = true;
+          } else {
+            this.selectors.loginSpinner.classList.add("hidden");
+            this.selectors.loginButtonText.textContent = "Ingresar";
+            this.selectors.loginForm.querySelector("button").disabled = false;
+          }
+        },
+
+        showNotification(message, type = "info") {
+          const colors = {
+            info: "bg-blue-500",
+            success: "bg-green-500",
+            error: "bg-red-500",
+          };
+          const icon = {
+            info: "fa-info-circle",
+            success: "fa-check-circle",
+            error: "fa-exclamation-triangle",
           };
 
-          const spreadsheet = SpreadsheetApp.openById(SHEET_IDS[career]);
-
-          switch(action) {
-            case 'login':
-              return handleLogin(spreadsheet, payload);
-            case 'get':
-              return handleGet(spreadsheet, type, userId);
-            case 'create':
-              return handleCreate(spreadsheet, type, payload);
-            case 'update':
-              return handleUpdate(spreadsheet, type, payload);
-            case 'delete':
-              return handleDelete(spreadsheet, type, payload);
-            case 'generateReport':
-              return handleGenerateReport(spreadsheet, payload);
-            default:
-              throw new Error('Acción no válida');
-          }
-        } catch (error) {
-          return ContentService
-            .createTextOutput(JSON.stringify({
-              success: false,
-              error: error.toString()
-            }))
-            .setMimeType(ContentService.MimeType.JSON);
-        }
-      }
-
-      function handleLogin(spreadsheet, { email, password }) {
-        const sheet = spreadsheet.getSheetByName('Usuario') || spreadsheet.insertSheet('Usuario');
-        let data = sheet.getDataRange().getValues();
-
-        if (data.length <= 1) {
-          // Crear usuarios por defecto si no existen
-          const defaultUsers = [
-            ['ID', 'Email', 'Rol', 'Nombre', 'Password', 'Fecha Registro', 'Estado', 'Telefono', 'Especialidad'],
-            [1, 'admin@edu.com', 'administrador', 'Administrador Sistema', 'admin123', new Date().toISOString().split('T')[0], 'activo', '555-0001', 'Administración'],
-            [2, 'profesor@edu.com', 'profesor', 'Profesor Auxiliar', 'prof123', new Date().toISOString().split('T')[0], 'activo', '555-0002', 'Educación'],
-            [3, 'docente@edu.com', 'docente', 'Docente Principal', 'doc123', new Date().toISOString().split('T')[0], 'activo', '555-0003', 'Docencia']
-          ];
-          sheet.clear();
-          sheet.getRange(1, 1, defaultUsers.length, defaultUsers[0].length).setValues(defaultUsers);
-          data = defaultUsers;
-        }
-
-        const user = data.slice(1).find(row => row[1] === email && row[4] === password);
-
-        if (user) {
-          return ContentService
-            .createTextOutput(JSON.stringify({
-              success: true,
-              user: {
-                id: user[0],
-                email: user[1],
-                rol: user[2],
-                nombre: user[3],
-                fechaRegistro: user[5],
-                estado: user[6],
-                telefono: user[7],
-                especialidad: user[8]
-              }
-            }))
-            .setMimeType(ContentService.MimeType.JSON);
-        }
-
-        throw new Error('Credenciales incorrectas');
-      }
-
-      function handleGet(spreadsheet, type, userId) {
-        const sheetNames = {
-          users: 'Usuario',
-          activities: 'Actividades',
-          teachers: 'Docentes',
-          progress: 'Progreso'
-        };
-
-        const sheet = spreadsheet.getSheetByName(sheetNames[type]) || spreadsheet.insertSheet(sheetNames[type]);
-        let data = sheet.getDataRange().getValues();
-
-        if (data.length <= 1) {
-          // Crear estructura por defecto si está vacía
-          createDefaultStructure(sheet, type);
-          data = sheet.getDataRange().getValues();
-        }
-
-        if (data.length <= 1) {
-          return ContentService
-            .createTextOutput(JSON.stringify({
-              success: true,
-              data: []
-            }))
-            .setMimeType(ContentService.MimeType.JSON);
-        }
-
-        let result = data.slice(1).map(row => {
-          const obj = {};
-          data[0].forEach((header, index) => {
-            obj[toCamelCase(header)] = row[index];
-          });
-          return obj;
-        });
-
-        // Filtrar por usuario si es necesario
-        if (userId && type === 'activities') {
-          result = result.filter(item => item.asignadoA == userId);
-        }
-
-        return ContentService
-          .createTextOutput(JSON.stringify({
-            success: true,
-            data: result
-          }))
-          .setMimeType(ContentService.MimeType.JSON);
-      }
-
-      function handleCreate(spreadsheet, type, payload) {
-        const sheetNames = {
-          users: 'Usuario',
-          activities: 'Actividades',
-          teachers: 'Docentes'
-        };
-
-        const sheet = spreadsheet.getSheetByName(sheetNames[type]);
-        if (!sheet) throw new Error('Hoja no encontrada');
-
-        const data = sheet.getDataRange().getValues();
-        const headers = data[0];
-
-        // Generar nuevo ID
-        const newId = data.length > 1 ? Math.max(...data.slice(1).map(row => parseInt(row[0]) || 0)) + 1 : 1;
-
-        const newRow = [newId];
-        headers.slice(1).forEach(header => {
-          const key = toCamelCase(header);
-          let value = payload[key];
-
-          if (header.toLowerCase().includes('fecha') && !value) {
-            value = new Date().toISOString().split('T')[0];
-          }
-
-          newRow.push(value || '');
-        });
-
-        sheet.appendRow(newRow);
-
-        return ContentService
-          .createTextOutput(JSON.stringify({
-            success: true,
-            data: { id: newId, ...payload }
-          }))
-          .setMimeType(ContentService.MimeType.JSON);
-      }
-
-      function handleUpdate(spreadsheet, type, payload) {
-        const sheetNames = {
-          users: 'Usuario',
-          activities: 'Actividades',
-          teachers: 'Docentes'
-        };
-
-        const sheet = spreadsheet.getSheetByName(sheetNames[type]);
-        if (!sheet) throw new Error('Hoja no encontrada');
-
-        const data = sheet.getDataRange().getValues();
-        const headers = data[0];
-
-        const rowIndex = data.slice(1).findIndex(row => row[0] == payload.id) + 2;
-
-        if (rowIndex > 1) {
-          headers.forEach((header, colIndex) => {
-            const key = toCamelCase(header);
-            if (payload.hasOwnProperty(key)) {
-              sheet.getRange(rowIndex, colIndex + 1).setValue(payload[key]);
-            }
-          });
-        }
-
-        return ContentService
-          .createTextOutput(JSON.stringify({
-            success: true,
-            data: payload
-          }))
-          .setMimeType(ContentService.MimeType.JSON);
-      }
-
-      function handleDelete(spreadsheet, type, payload) {
-        const sheetNames = {
-          users: 'Usuario',
-          activities: 'Actividades',
-          teachers: 'Docentes'
-        };
-
-        const sheet = spreadsheet.getSheetByName(sheetNames[type]);
-        if (!sheet) throw new Error('Hoja no encontrada');
-
-        const data = sheet.getDataRange().getValues();
-        const rowIndex = data.slice(1).findIndex(row => row[0] == payload.id) + 2;
-
-        if (rowIndex > 1) {
-          sheet.deleteRow(rowIndex);
-        }
-
-        return ContentService
-          .createTextOutput(JSON.stringify({
-            success: true
-          }))
-          .setMimeType(ContentService.MimeType.JSON);
-      }
-
-      function handleGenerateReport(spreadsheet, payload) {
-        const progressSheet = spreadsheet.getSheetByName('Progreso') || spreadsheet.insertSheet('Progreso');
-
-        // Crear encabezados si no existen
-        if (progressSheet.getLastRow() === 0) {
-          progressSheet.appendRow(['Fecha', 'Período Inicio', 'Período Fin', 'Total Actividades', 'Completadas', 'Total Docentes', 'Generado por']);
-        }
-
-        // Obtener datos para el reporte
-        const activitiesSheet = spreadsheet.getSheetByName('Actividades');
-        const teachersSheet = spreadsheet.getSheetByName('Docentes');
-
-        const activities = activitiesSheet ? activitiesSheet.getDataRange().getValues().slice(1) : [];
-        const teachers = teachersSheet ? teachersSheet.getDataRange().getValues().slice(1) : [];
-
-        const totalActivities = activities.length;
-        const completedActivities = activities.filter(row => row[5] === 'completada').length;
-        const totalTeachers = teachers.length;
-
-        const reportRow = [
-          new Date().toISOString().split('T')[0],
-          payload.startDate || new Date().toISOString().split('T')[0],
-          payload.endDate || new Date().toISOString().split('T')[0],
-          totalActivities,
-          completedActivities,
-          totalTeachers,
-          payload.generatedBy
-        ];
-
-        progressSheet.appendRow(reportRow);
-
-        return ContentService
-          .createTextOutput(JSON.stringify({
-            success: true,
-            data: {
-              totalActivities,
-              completedActivities,
-              totalTeachers,
-              date: new Date().toISOString().split('T')[0]
-            }
-          }))
-          .setMimeType(ContentService.MimeType.JSON);
-      }
-
-      function createDefaultStructure(sheet, type) {
-        const structures = {
-          users: ['ID', 'Email', 'Rol', 'Nombre', 'Password', 'Fecha Registro', 'Estado', 'Telefono', 'Especialidad'],
-          activities: ['ID', 'Título', 'Descripción', 'Fecha Límite', 'Prioridad', 'Estado', 'Asignado a', 'Creado por', 'Fecha Creación', 'Fecha Completado', 'Notas'],
-          teachers: ['ID', 'Nombre', 'Email', 'Especialidad', 'Teléfono', 'Estado', 'Fecha Registro', 'Notas'],
-          progress: ['Fecha', 'Período Inicio', 'Período Fin', 'Total Actividades', 'Completadas', 'Total Docentes', 'Generado por']
-        };
-
-        if (structures[type]) {
-          sheet.clear();
-          sheet.appendRow(structures[type]);
-        }
-      }
-
-      function toCamelCase(str) {
-        return str.replace(/(?:^\w|[A-Z]|\b\w)/g, (word, index) => {
-          return index === 0 ? word.toLowerCase() : word.toUpperCase();
-        }).replace(/\s+/g, '').replace(/[áàäâ]/g, 'a').replace(/[éèëê]/g, 'e').replace(/[íìïî]/g, 'i').replace(/[óòöô]/g, 'o').replace(/[úùüû]/g, 'u').replace(/ñ/g, 'n');
-      }
-                                      </textarea>
-                                  </div>
-                              </div>
-                          </div>
-
-                          <div class="mt-8 flex space-x-4">
-                              <button onclick="completeGoogleSheetsSetup(document.getElementById('googleScriptUrl').value)" class="flex-1 bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition duration-200 font-medium">
-                                  <i class="fas fa-check mr-2"></i>Conectar con Google Sheets
-                              </button>
-                              <button onclick="skipGoogleSheetsSetup()" class="flex-1 bg-gray-300 text-gray-700 py-3 rounded-lg hover:bg-gray-400 transition duration-200 font-medium">
-                                  <i class="fas fa-times mr-2"></i>Omitir por ahora
-                              </button>
-                          </div>
-
-                          <div class="mt-6 bg-gray-50 border border-gray-200 rounded-lg p-4">
-                              <h4 class="font-semibold text-gray-800 mb-2 flex items-center">
-                                  <i class="fas fa-shield-alt mr-2"></i>Permisos y Seguridad
-                              </h4>
-                              <ul class="text-gray-600 text-sm space-y-1">
-                                  <li>• <strong>Ejecutar como:</strong> Tu cuenta de Google</li>
-                                  <li>• <strong>Acceso:</strong> Cualquier persona (necesario para el sistema)</li>
-                                  <li>• <strong>Permisos:</strong> Acceso completo a Google Sheets</li>
-                                  <li>• <strong>Datos:</strong> Se almacenan en tus hojas de Google Sheets</li>
-                              </ul>
-                          </div>
-                      </div>
-                  `;
-                  return modal;
-              }
-
-              /**
-               * Copia el código al portapapeles
-               */
-              function copyCodeToClipboard() {
-                  const codeTextarea = document.getElementById('googleAppsScriptCode');
-                  codeTextarea.select();
-                  document.execCommand('copy');
-                  showNotification('Código copiado al portapapeles', 'success');
-              }
-
-              /**
-               * Configuración rápida desde el login
-               */
-              function quickSetupGoogleSheets() {
-                  const url = document.getElementById('quickSetupUrl').value.trim();
-
-                  if (!url) {
-                      showNotification('Por favor ingresa la URL de tu Google Apps Script', 'warning');
-                      return;
-                  }
-
-                  if (!url.includes('script.google.com')) {
-                      showNotification('Por favor ingresa una URL válida de Google Apps Script', 'error');
-                      return;
-                  }
-
-                  GOOGLE_SCRIPT_URL = url;
-                  updateConnectionStatus('connected');
-                  showNotification('¡Conexión configurada exitosamente! Ya puedes iniciar sesión.', 'success');
-
-                  // Limpiar el campo
-                  document.getElementById('quickSetupUrl').value = '';
-              }
-
-              // ============================================================================
-              // FUNCIONES DE COMUNICACIÓN CON GOOGLE APPS SCRIPT
-              // ============================================================================
-
-              /**
-               * Realiza peticiones al Google Apps Script
-               */
-              async function callGoogleScript(action, type = null, payload = null, userId = null) {
-                  try {
-                      if (!GOOGLE_SCRIPT_URL) {
-                          throw new Error('Google Sheets no configurado. Haz clic en el botón verde para configurarlo.');
-                      }
-
-                      showLoadingIndicator(true);
-                      updateConnectionStatus('syncing');
-
-                      const requestData = {
-                          action,
-                          career: currentCareer,
-                          type,
-                          payload,
-                          userId
-                      };
-
-                      const response = await fetch(GOOGLE_SCRIPT_URL, {
-                          method: 'POST',
-                          headers: {
-                              'Content-Type': 'application/json',
-                          },
-                          body: JSON.stringify(requestData)
-                      });
-
-                      if (!response.ok) {
-                          throw new Error(`HTTP error! status: ${response.status}`);
-                      }
-
-                      const result = await response.json();
-
-                      if (!result.success) {
-                          throw new Error(result.error || 'Error desconocido');
-                      }
-
-                      // Actualizar tiempo de última sincronización
-                      lastSyncTime[`${currentCareer}_${type || action}`] = new Date();
-                      retryAttempts = 0;
-                      updateConnectionStatus('connected');
-
-                      return result;
-                  } catch (error) {
-                      console.error('Error en comunicación con Google Script:', error);
-                      retryAttempts++;
-                      updateConnectionStatus('error');
-                      showNotification(`Error: ${error.message}`, 'error');
-                      throw error;
-                  } finally {
-                      showLoadingIndicator(false);
-                  }
-              }
-
-              /**
-               * Autentica usuario con Google Sheets
-               */
-              async function authenticateUser(career, email, password) {
-                  try {
-                      const result = await callGoogleScript('login', null, { email, password });
-                      return result.user;
-                  } catch (error) {
-                      return null;
-                  }
-              }
-
-              /**
-               * Obtiene datos de Google Sheets
-               */
-              async function fetchData(type, userId = null) {
-                  try {
-                      const result = await callGoogleScript('get', type, null, userId);
-                      cachedData[currentCareer][type] = result.data;
-                      return result.data;
-                  } catch (error) {
-                      // Si hay error, usar datos en caché si existen
-                      return cachedData[currentCareer][type] || [];
-                  }
-              }
-
-              /**
-               * Crea nuevo registro en Google Sheets
-               */
-              async function createRecord(type, data) {
-                  try {
-                      const result = await callGoogleScript('create', type, data);
-                      // Actualizar caché local
-                      await fetchData(type);
-                      return result.data;
-                  } catch (error) {
-                      throw error;
-                  }
-              }
-
-              /**
-               * Actualiza registro en Google Sheets
-               */
-              async function updateRecord(type, data) {
-                  try {
-                      const result = await callGoogleScript('update', type, data);
-                      // Actualizar caché local
-                      await fetchData(type);
-                      return result.data;
-                  } catch (error) {
-                      throw error;
-                  }
-              }
-
-              /**
-               * Elimina registro de Google Sheets
-               */
-              async function deleteRecord(type, id) {
-                  try {
-                      await callGoogleScript('delete', type, { id });
-                      // Actualizar caché local
-                      await fetchData(type);
-                      return true;
-                  } catch (error) {
-                      throw error;
-                  }
-              }
-
-              /**
-               * Genera reporte en Google Sheets
-               */
-              async function generateReport(reportData) {
-                  try {
-                      const result = await callGoogleScript('generateReport', null, reportData);
-                      // Actualizar datos de progreso
-                      await fetchData('progress');
-                      return result.data;
-                  } catch (error) {
-                      throw error;
-                  }
-              }
-
-              // ============================================================================
-              // SISTEMA DE SINCRONIZACIÓN EN TIEMPO REAL
-              // ============================================================================
-
-              /**
-               * Inicia la sincronización en tiempo real
-               */
-              function startRealTimeSync() {
-                  if (syncInterval) clearInterval(syncInterval);
-
-                  syncInterval = setInterval(async () => {
-                      if (GOOGLE_SCRIPT_URL && isOnline) {
-                          try {
-                              await syncAllData();
-                          } catch (error) {
-                              console.error('Error en sincronización automática:', error);
-                              if (retryAttempts >= maxRetryAttempts) {
-                                  updateConnectionStatus('error');
-                              }
-                          }
-                      }
-                  }, syncFrequency);
-
-                  updateConnectionStatus('connected');
-              }
-
-              /**
-               * Detiene la sincronización en tiempo real
-               */
-              function stopRealTimeSync() {
-                  if (syncInterval) {
-                      clearInterval(syncInterval);
-                      syncInterval = null;
-                  }
-                  updateConnectionStatus('disconnected');
-              }
-
-              /**
-               * Sincroniza todos los datos
-               */
-              async function syncAllData() {
-                  if (!GOOGLE_SCRIPT_URL) return;
-
-                  const dataTypes = ['users', 'activities', 'teachers', 'progress'];
-
-                  for (const type of dataTypes) {
-                      try {
-                          await fetchData(type, currentUser?.rol === 'docente' ? currentUser.id : null);
-                      } catch (error) {
-                          console.error(`Error sincronizando ${type}:`, error);
-                      }
-                  }
-
-                  // Actualizar UI si estamos en la sección correspondiente
-                  const currentSection = document.querySelector('main > div:not(.hidden)');
-                  if (currentSection) {
-                      const sectionId = currentSection.id.replace('Section', '');
-                      if (sectionId === 'overview') loadOverview();
-                      else if (sectionId === 'users') loadUsers();
-                      else if (sectionId === 'activities') loadActivities();
-                      else if (sectionId === 'teachers') loadTeachers();
-                      else if (sectionId === 'reports') loadReports();
-                  }
-              }
-
-              /**
-               * Fuerza sincronización inmediata
-               */
-              async function forceSyncNow() {
-                  if (!GOOGLE_SCRIPT_URL) {
-                      showNotification('Google Sheets no configurado', 'warning');
-                      return;
-                  }
-
-                  showNotification('Sincronizando datos...', 'info');
-                  try {
-                      await syncAllData();
-                      showNotification('Datos sincronizados exitosamente', 'success');
-                  } catch (error) {
-                      showNotification('Error en la sincronización', 'error');
-                  }
-              }
-
-              /**
-               * Configura la frecuencia de sincronización
-               */
-              function setSyncFrequency(seconds) {
-                  syncFrequency = seconds * 1000;
-                  if (syncInterval) {
-                      startRealTimeSync(); // Reiniciar con nueva frecuencia
-                  }
-              }
-
-              /**
-               * Obtiene estadísticas de sincronización
-               */
-              function getSyncStats() {
-                  return {
-                      isActive: !!syncInterval,
-                      frequency: syncFrequency / 1000,
-                      isOnline,
-                      retryAttempts,
-                      lastSyncTimes: lastSyncTime
-                  };
-              }
-
-              /**
-               * Actualiza el estado visual de conexión
-               */
-              function updateConnectionStatus(status) {
-                  const indicators = [
-                      document.getElementById('connectionIndicator'),
-                      document.getElementById('loginConnectionStatus')
-                  ];
-
-                  indicators.forEach(indicator => {
-                      if (!indicator) return;
-
-                      indicator.className = 'w-3 h-3 rounded-full ';
-
-                      switch(status) {
-                          case 'connected':
-                              indicator.className += 'pulse-green';
-                              break;
-                          case 'syncing':
-                              indicator.className += 'spin-blue';
-                              break;
-                          case 'retrying':
-                              indicator.className += 'pulse-yellow';
-                              break;
-                          case 'error':
-                              indicator.className += 'bg-red-500';
-                              break;
-                          case 'disconnected':
-                          default:
-                              indicator.className += 'bg-gray-400';
-                              break;
-                      }
-                  });
-              }
-
-              /**
-               * Configura detección de red
-               */
-              function setupNetworkDetection() {
-                  window.addEventListener('online', () => {
-                      isOnline = true;
-                      updateConnectionStatus('connected');
-                      showNotification('Conexión restaurada', 'success');
-                      if (GOOGLE_SCRIPT_URL) {
-                          startRealTimeSync();
-                      }
-                  });
-
-                  window.addEventListener('offline', () => {
-                      isOnline = false;
-                      updateConnectionStatus('disconnected');
-                      showNotification('Sin conexión a internet', 'warning');
-                      stopRealTimeSync();
-                  });
-              }
-
-              // ============================================================================
-              // FUNCIONES DE UTILIDAD Y UI
-              // ============================================================================
-
-              /**
-               * Muestra/oculta indicador de carga
-               */
-              function showLoadingIndicator(show) {
-                  const indicator = document.getElementById('loadingIndicator');
-                  indicator.style.display = show ? 'block' : 'none';
-              }
-
-              /**
-               * Muestra notificaciones
-               */
-              function showNotification(message, type = 'info') {
-                  const notification = document.createElement('div');
-                  notification.className = `notification-enter bg-white border-l-4 ${
-                      type === 'success' ? 'border-green-500' :
-                      type === 'error' ? 'border-red-500' :
-                      type === 'warning' ? 'border-yellow-500' : 'border-blue-500'
-                  } p-4 rounded-lg shadow-lg mb-2`;
-
-                  notification.innerHTML = `
-                      <div class="flex items-center">
-                          <i class="fas ${
-                              type === 'success' ? 'fa-check-circle text-green-500' :
-                              type === 'error' ? 'fa-exclamation-circle text-red-500' :
-                              type === 'warning' ? 'fa-exclamation-triangle text-yellow-500' : 'fa-info-circle text-blue-500'
-                          } mr-3"></i>
-                          <span class="text-gray-800">${message}</span>
-                          <button onclick="this.parentElement.parentElement.remove()" class="ml-auto text-gray-500 hover:text-gray-700">
-                              <i class="fas fa-times"></i>
-                          </button>
-                      </div>
-                  `;
-
-                  document.getElementById('notifications').appendChild(notification);
-
-                  setTimeout(() => {
-                      if (notification.parentElement) {
-                          notification.remove();
-                      }
-                  }, 5000);
-              }
-
-              /**
-               * Verifica permisos del usuario
-               */
-              function hasPermission(action) {
-                  if (!currentUser) return false;
-
-                  const permissions = {
-                      'administrador': ['manage_users', 'manage_activities', 'manage_teachers', 'view_reports', 'generate_reports', 'manage_profile', 'switch_career'],
-                      'profesor': ['manage_activities', 'manage_teachers', 'view_reports', 'generate_reports', 'manage_profile'],
-                      'docente': ['view_own_activities', 'manage_profile', 'reset_password']
-                  };
-
-                  return permissions[currentUser.rol]?.includes(action) || false;
-              }
-
-              /**
-               * Obtiene datos actuales
-               */
-              function getCurrentData() {
-                  return cachedData[currentCareer];
-              }
-
-              /**
-               * Actualiza la UI según la carrera
-               */
-              function updateCareerUI() {
-                  const careerNames = {
-                      'software': 'Ingeniería en Software',
-                      'mecatronica': 'Ingeniería en Mecatrónica y Manufactura'
-                  };
-
-                  const careerIcons = {
-                      'software': 'fa-code',
-                      'mecatronica': 'fa-cogs'
-                  };
-
-                  // Actualizar header
-                  document.getElementById('headerCareerName').textContent = careerNames[currentCareer];
-                  const headerIcon = document.getElementById('headerCareerIcon');
-                  headerIcon.className = `w-10 h-10 ${currentCareer === 'software' ? 'bg-indigo-600' : 'bg-emerald-600'} rounded-full flex items-center justify-center`;
-                  headerIcon.innerHTML = `<i class="fas ${careerIcons[currentCareer]} text-white"></i>`;
-
-                  // Actualizar badge en overview
-                  const currentCareerBadge = document.getElementById('currentCareerBadge');
-                  currentCareerBadge.innerHTML = `
-                      <span class="px-3 py-1 text-sm font-medium rounded-full ${currentCareer === 'software' ? 'bg-indigo-100 text-indigo-800' : 'bg-emerald-100 text-emerald-800'}">
-                          <i class="fas ${careerIcons[currentCareer]} mr-2"></i>${careerNames[currentCareer]}
-                      </span>
-                  `;
-
-                  // Actualizar selector de carrera
-                  if (document.getElementById('switchCareer')) {
-                      document.getElementById('switchCareer').value = currentCareer;
-                  }
-              }
-
-              /**
-               * Genera el menú según el rol
-               */
-              function generateMenu() {
-                  const menu = document.getElementById('sidebarMenu');
-                  menu.innerHTML = '';
-
-                  const menuItems = [
-                      { id: 'overview', icon: 'fa-tachometer-alt', text: 'Panel Principal', permission: true },
-                      { id: 'users', icon: 'fa-users', text: 'Gestión de Usuarios', permission: hasPermission('manage_users') },
-                      { id: 'activities', icon: 'fa-tasks', text: 'Actividades', permission: hasPermission('manage_activities') || hasPermission('view_own_activities') },
-                      { id: 'teachers', icon: 'fa-chalkboard-teacher', text: 'Gestión de Docentes', permission: hasPermission('manage_teachers') },
-                      { id: 'reports', icon: 'fa-chart-bar', text: 'Reportes', permission: hasPermission('view_reports') },
-                      { id: 'profile', icon: 'fa-user', text: 'Mi Perfil', permission: hasPermission('manage_profile') }
-                  ];
-
-                  menuItems.forEach(item => {
-                      if (item.permission) {
-                          const li = document.createElement('li');
-                          li.innerHTML = `
-                              <button onclick="showSection('${item.id}')" class="w-full flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg transition duration-200">
-                                  <i class="fas ${item.icon}"></i>
-                                  <span>${item.text}</span>
-                              </button>
-                          `;
-                          menu.appendChild(li);
-                      }
-                  });
-              }
-
-              /**
-               * Muestra una sección específica
-               */
-              function showSection(sectionId) {
-                  // Ocultar todas las secciones
-                  const sections = ['overviewSection', 'usersSection', 'activitiesSection', 'teachersSection', 'reportsSection', 'profileSection'];
-                  sections.forEach(id => {
-                      document.getElementById(id).classList.add('hidden');
-                  });
-
-                  // Mostrar la sección seleccionada
-                  document.getElementById(sectionId + 'Section').classList.remove('hidden');
-
-                  // Cargar contenido específico
-                  switch(sectionId) {
-                      case 'overview':
-                          loadOverview();
-                          break;
-                      case 'users':
-                          loadUsers();
-                          break;
-                      case 'activities':
-                          loadActivities();
-                          break;
-                      case 'teachers':
-                          loadTeachers();
-                          break;
-                      case 'reports':
-                          loadReports();
-                          break;
-                      case 'profile':
-                          loadProfile();
-                          break;
-                  }
-              }
-
-              // ============================================================================
-              // FUNCIONES DE CARGA DE CONTENIDO
-              // ============================================================================
-
-              async function loadOverview() {
-                  try {
-                      // Cargar todos los datos necesarios
-                      const [users, activities, teachers] = await Promise.all([
-                          fetchData('users'),
-                          fetchData('activities'),
-                          fetchData('teachers')
-                      ]);
-
-                      // Cargar estadísticas
-                      const statsCards = document.getElementById('statsCards');
-                      const stats = [
-                          { title: 'Total Usuarios', value: users.length, icon: 'fa-users', color: 'bg-blue-500' },
-                          { title: 'Actividades Activas', value: activities.filter(a => a.estado === 'pendiente' || a.estado === 'en_progreso').length, icon: 'fa-tasks', color: 'bg-green-500' },
-                          { title: 'Docentes Registrados', value: teachers.length, icon: 'fa-chalkboard-teacher', color: 'bg-purple-500' },
-                          { title: 'Completadas', value: activities.filter(a => a.estado === 'completada').length, icon: 'fa-check-circle', color: 'bg-orange-500' }
-                      ];
-
-                      statsCards.innerHTML = stats.map(stat => `
-                          <div class="bg-white rounded-xl card-shadow p-6">
-                              <div class="flex items-center">
-                                  <div class="w-12 h-12 ${stat.color} rounded-lg flex items-center justify-center">
-                                      <i class="fas ${stat.icon} text-white text-xl"></i>
-                                  </div>
-                                  <div class="ml-4">
-                                      <p class="text-sm font-medium text-gray-600">${stat.title}</p>
-                                      <p class="text-2xl font-bold text-gray-900">${stat.value}</p>
-                                  </div>
-                              </div>
-                          </div>
-                      `).join('');
-
-                      // Cargar actividad reciente
-                      const recentActivity = document.getElementById('recentActivity');
-                      const recentActivities = activities.slice(-5).reverse();
-
-                      if (recentActivities.length === 0) {
-                          recentActivity.innerHTML = `
-                              <div class="text-center py-8 text-gray-500">
-                                  <i class="fas fa-inbox text-4xl mb-2"></i>
-                                  <p>No hay actividades recientes</p>
-                                  <p class="text-xs">Las actividades aparecerán aquí cuando se creen</p>
-                              </div>
-                          `;
-                      } else {
-                          recentActivity.innerHTML = recentActivities.map(activity => {
-                              const user = users.find(u => u.id === activity.asignadoA);
-                              return `
-                                  <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                                      <div class="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
-                                          <i class="fas fa-tasks text-indigo-600 text-sm"></i>
-                                      </div>
-                                      <div class="flex-1">
-                                          <p class="text-sm font-medium text-gray-800">${activity.titulo}</p>
-                                          <p class="text-xs text-gray-600">Asignado a: ${user?.nombre || 'Usuario desconocido'}</p>
-                                      </div>
-                                      <span class="text-xs px-2 py-1 rounded-full ${
-                                          activity.estado === 'completada' ? 'bg-green-100 text-green-800' :
-                                          activity.estado === 'en_progreso' ? 'bg-blue-100 text-blue-800' :
-                                          'bg-yellow-100 text-yellow-800'
-                                      }">${activity.estado.replace('_', ' ')}</span>
-                                  </div>
-                              `;
-                          }).join('');
-                      }
-                  } catch (error) {
-                      showNotification('Error al cargar el panel principal', 'error');
-                  }
-              }
-
-              async function loadUsers() {
-                  if (!hasPermission('manage_users')) {
-                      showNotification('No tienes permisos para ver esta sección', 'error');
-                      return;
-                  }
-
-                  try {
-                      const users = await fetchData('users');
-                      const usersTable = document.getElementById('usersTable');
-                      let filteredUsers = users;
-
-                      // Si es profesor auxiliar, solo puede ver docentes y otros profesores
-                      if (currentUser.rol === 'profesor') {
-                          filteredUsers = users.filter(u => u.rol === 'docente' || u.rol === 'profesor');
-                      }
-
-                      if (filteredUsers.length === 0) {
-                          usersTable.innerHTML = `
-                              <tr>
-                                  <td colspan="7" class="px-6 py-8 text-center text-gray-500">
-                                      <i class="fas fa-users text-4xl mb-2"></i>
-                                      <p>No hay usuarios registrados</p>
-                                      <p class="text-xs">Los usuarios aparecerán aquí cuando se registren</p>
-                                  </td>
-                              </tr>
-                          `;
-                      } else {
-                          usersTable.innerHTML = filteredUsers.map(user => `
-                              <tr>
-                                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${user.id}</td>
-                                  <td class="px-6 py-4 whitespace-nowrap">
-                                      <div class="flex items-center">
-                                          <img class="h-10 w-10 rounded-full" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Ccircle cx='20' cy='20' r='20' fill='%23e5e7eb'/%3E%3Cpath d='M20 20c3.3 0 6-2.7 6-6s-2.7-6-6-6-6 2.7-6 6 2.7 6 6 6zm0 2c-4 0-12 2-12 6v2h24v-2c0-4-8-6-12-6z' fill='%236b7280'/%3E%3C/svg%3E" alt="">
-                                          <div class="ml-4">
-                                              <div class="text-sm font-medium text-gray-900">${user.nombre}</div>
-                                          </div>
-                                      </div>
-                                  </td>
-                                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${user.email}</td>
-                                  <td class="px-6 py-4 whitespace-nowrap">
-                                      <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                          user.rol === 'administrador' ? 'bg-red-100 text-red-800' :
-                                          user.rol === 'profesor' ? 'bg-blue-100 text-blue-800' :
-                                          'bg-green-100 text-green-800'
-                                      }">
-                                          ${user.rol.charAt(0).toUpperCase() + user.rol.slice(1)}
-                                      </span>
-                                  </td>
-                                  <td class="px-6 py-4 whitespace-nowrap">
-                                      <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                          user.estado === 'activo' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                                      }">
-                                          ${user.estado}
-                                      </span>
-                                  </td>
-                                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${user.fechaRegistro}</td>
-                                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                      <button onclick="editUser(${user.id})" class="text-indigo-600 hover:text-indigo-900 mr-3">
-                                          <i class="fas fa-edit"></i>
-                                      </button>
-                                      ${user.id !== currentUser.id ? `
-                                          <button onclick="deleteUser(${user.id})" class="text-red-600 hover:text-red-900">
-                                              <i class="fas fa-trash"></i>
-                                          </button>
-                                      ` : ''}
-                                  </td>
-                              </tr>
-                          `).join('');
-                      }
-                  } catch (error) {
-                      showNotification('Error al cargar usuarios', 'error');
-                  }
-              }
-
-              async function loadActivities() {
-                  try {
-                      const [activities, users] = await Promise.all([
-                          fetchData('activities', currentUser.rol === 'docente' ? currentUser.id : null),
-                          fetchData('users')
-                      ]);
-
-                      const activitiesGrid = document.getElementById('activitiesGrid');
-
-                      if (activities.length === 0) {
-                          activitiesGrid.innerHTML = `
-                              <div class="col-span-full text-center py-12 text-gray-500">
-                                  <i class="fas fa-tasks text-6xl mb-4"></i>
-                                  <h3 class="text-lg font-medium mb-2">No hay actividades</h3>
-                                  <p class="text-sm">Las actividades aparecerán aquí cuando se creen</p>
-                                  ${hasPermission('manage_activities') ? `
-                                      <button onclick="addActivity()" class="mt-4 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition duration-200">
-                                          <i class="fas fa-plus mr-2"></i>Crear Primera Actividad
-                                      </button>
-                                  ` : ''}
-                              </div>
-                          `;
-                      } else {
-                          activitiesGrid.innerHTML = activities.map(activity => {
-                              const user = users.find(u => u.id === activity.asignadoA);
-                              const creator = users.find(u => u.id === activity.creadoPor);
-                              return `
-                                  <div class="bg-white rounded-xl card-shadow p-6">
-                                      <div class="flex justify-between items-start mb-4">
-                                          <h3 class="text-lg font-semibold text-gray-800">${activity.titulo}</h3>
-                                          <span class="px-2 py-1 text-xs rounded-full ${
-                                              activity.prioridad === 'alta' ? 'bg-red-100 text-red-800' :
-                                              activity.prioridad === 'media' ? 'bg-yellow-100 text-yellow-800' :
-                                              'bg-green-100 text-green-800'
-                                          }">${activity.prioridad}</span>
-                                      </div>
-
-                                      <p class="text-gray-600 mb-4">${activity.descripcion}</p>
-
-                                      <div class="space-y-2 mb-4">
-                                          <div class="flex items-center text-sm text-gray-600">
-                                              <i class="fas fa-calendar mr-2"></i>
-                                              Límite: ${activity.fechaLimite}
-                                          </div>
-                                          <div class="flex items-center text-sm text-gray-600">
-                                              <i class="fas fa-user mr-2"></i>
-                                              Asignado: ${user?.nombre || 'Usuario desconocido'}
-                                          </div>
-                                          <div class="flex items-center text-sm text-gray-600">
-                                              <i class="fas fa-user-plus mr-2"></i>
-                                              Creado por: ${creator?.nombre || 'Usuario desconocido'}
-                                          </div>
-                                          ${activity.notas ? `
-                                              <div class="flex items-start text-sm text-gray-600">
-                                                  <i class="fas fa-sticky-note mr-2 mt-1"></i>
-                                                  <span>${activity.notas}</span>
-                                              </div>
-                                          ` : ''}
-                                      </div>
-
-                                      <div class="flex justify-between items-center">
-                                          <span class="px-3 py-1 text-sm rounded-full ${
-                                              activity.estado === 'completada' ? 'bg-green-100 text-green-800' :
-                                              activity.estado === 'en_progreso' ? 'bg-blue-100 text-blue-800' :
-                                              'bg-yellow-100 text-yellow-800'
-                                          }">${activity.estado.replace('_', ' ')}</span>
-
-                                          ${hasPermission('manage_activities') ? `
-                                              <div class="space-x-2">
-                                                  <button onclick="editActivity(${activity.id})" class="text-indigo-600 hover:text-indigo-800">
-                                                      <i class="fas fa-edit"></i>
-                                                  </button>
-                                                  <button onclick="deleteActivity(${activity.id})" class="text-red-600 hover:text-red-800">
-                                                      <i class="fas fa-trash"></i>
-                                                  </button>
-                                              </div>
-                                          ` : ''}
-                                      </div>
-                                  </div>
-                              `;
-                          }).join('');
-                      }
-                  } catch (error) {
-                      showNotification('Error al cargar actividades', 'error');
-                  }
-              }
-
-              async function loadTeachers() {
-                  if (!hasPermission('manage_teachers')) {
-                      showNotification('No tienes permisos para ver esta sección', 'error');
-                      return;
-                  }
-
-                  try {
-                      const teachers = await fetchData('teachers');
-                      const teachersTable = document.getElementById('teachersTable');
-
-                      if (teachers.length === 0) {
-                          teachersTable.innerHTML = `
-                              <tr>
-                                  <td colspan="7" class="px-6 py-8 text-center text-gray-500">
-                                      <i class="fas fa-chalkboard-teacher text-4xl mb-2"></i>
-                                      <p>No hay docentes registrados</p>
-                                      <p class="text-xs">Los docentes aparecerán aquí cuando se registren</p>
-                                  </td>
-                              </tr>
-                          `;
-                      } else {
-                          teachersTable.innerHTML = teachers.map(teacher => `
-                              <tr>
-                                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${teacher.id}</td>
-                                  <td class="px-6 py-4 whitespace-nowrap">
-                                      <div class="flex items-center">
-                                          <img class="h-10 w-10 rounded-full" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Ccircle cx='20' cy='20' r='20' fill='%23e5e7eb'/%3E%3Cpath d='M20 20c3.3 0 6-2.7 6-6s-2.7-6-6-6-6 2.7-6 6 2.7 6 6 6zm0 2c-4 0-12 2-12 6v2h24v-2c0-4-8-6-12-6z' fill='%236b7280'/%3E%3C/svg%3E" alt="">
-                                          <div class="ml-4">
-                                              <div class="text-sm font-medium text-gray-900">${teacher.nombre}</div>
-                                          </div>
-                                      </div>
-                                  </td>
-                                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${teacher.email}</td>
-                                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${teacher.especialidad}</td>
-                                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${teacher.telefono}</td>
-                                  <td class="px-6 py-4 whitespace-nowrap">
-                                      <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                          teacher.estado === 'activo' ? 'bg-green-100 text-green-800' :
-                                          teacher.estado === 'licencia' ? 'bg-yellow-100 text-yellow-800' :
-                                          'bg-red-100 text-red-800'
-                                      }">
-                                          ${teacher.estado}
-                                      </span>
-                                  </td>
-                                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                      <button onclick="editTeacher(${teacher.id})" class="text-indigo-600 hover:text-indigo-900 mr-3">
-                                          <i class="fas fa-edit"></i>
-                                      </button>
-                                      <button onclick="deleteTeacher(${teacher.id})" class="text-red-600 hover:text-red-900">
-                                          <i class="fas fa-trash"></i>
-                                      </button>
-                                  </td>
-                              </tr>
-                          `).join('');
-                      }
-                  } catch (error) {
-                      showNotification('Error al cargar docentes', 'error');
-                  }
-              }
-
-              async function loadReports() {
-                  if (!hasPermission('view_reports')) {
-                      showNotification('No tienes permisos para ver esta sección', 'error');
-                      return;
-                  }
-
-                  try {
-                      const [users, progress] = await Promise.all([
-                          fetchData('users'),
-                          fetchData('progress')
-                      ]);
-
-                      // Cargar usuarios para el selector
-                      const userSelect = document.getElementById('userSelect');
-                      let availableUsers = users;
-
-                      if (currentUser.rol === 'profesor') {
-                          availableUsers = users.filter(u => u.rol === 'docente' || u.rol === 'profesor');
-                      }
-
-                      userSelect.innerHTML = '<option value="">Seleccionar usuario</option>' +
-                          availableUsers.map(user => `<option value="${user.id}">${user.nombre}</option>`).join('');
-
-                      // Establecer fechas por defecto
-                      const today = new Date();
-                      const startDate = new Date(today.getFullYear(), today.getMonth(), 1);
-                      document.getElementById('startDate').value = startDate.toISOString().split('T')[0];
-                      document.getElementById('endDate').value = today.toISOString().split('T')[0];
-
-                      // Cargar progreso histórico
-                      const progressHistoryTable = document.getElementById('progressHistoryTable');
-
-                      if (progress.length === 0) {
-                          progressHistoryTable.innerHTML = `
-                              <tr>
-                                  <td colspan="6" class="px-4 py-8 text-center text-gray-500">
-                                      <i class="fas fa-chart-bar text-4xl mb-2"></i>
-                                      <p>No hay reportes generados</p>
-                                      <p class="text-xs">Los reportes aparecerán aquí cuando se generen</p>
-                                  </td>
-                              </tr>
-                          `;
-                      } else {
-                          progressHistoryTable.innerHTML = progress.map(progressItem => {
-                              const generator = users.find(u => u.id === progressItem.generadoPor);
-                              return `
-                                  <tr>
-                                      <td class="px-4 py-2 text-sm text-gray-900">${progressItem.fecha}</td>
-                                      <td class="px-4 py-2 text-sm text-gray-900">${progressItem.periodoInicio} - ${progressItem.periodoFin}</td>
-                                      <td class="px-4 py-2 text-sm text-gray-900">${progressItem.totalActividades}</td>
-                                      <td class="px-4 py-2 text-sm text-gray-900">${progressItem.completadas}</td>
-                                      <td class="px-4 py-2 text-sm text-gray-900">${progressItem.totalDocentes}</td>
-                                      <td class="px-4 py-2 text-sm text-gray-900">${generator?.nombre || 'Usuario desconocido'}</td>
-                                  </tr>
-                              `;
-                          }).join('');
-                      }
-                  } catch (error) {
-                      showNotification('Error al cargar reportes', 'error');
-                  }
-              }
-
-              function loadProfile() {
-                  document.getElementById('profileName').textContent = currentUser.nombre;
-                  document.getElementById('profileRole').textContent = currentUser.rol.charAt(0).toUpperCase() + currentUser.rol.slice(1);
-                  document.getElementById('profileEmail').textContent = currentUser.email;
-
-                  // Badge de carrera
-                  const careerNames = {
-                      'software': 'Ingeniería en Software',
-                      'mecatronica': 'Ingeniería en Mecatrónica y Manufactura'
-                  };
-
-                  document.getElementById('profileCareerBadge').innerHTML = `
-                      <span class="px-3 py-1 text-sm font-medium rounded-full ${currentCareer === 'software' ? 'bg-indigo-100 text-indigo-800' : 'bg-emerald-100 text-emerald-800'}">
-                          ${careerNames[currentCareer]}
-                      </span>
-                  `;
-
-                  document.getElementById('fullName').value = currentUser.nombre;
-                  document.getElementById('emailProfile').value = currentUser.email;
-                  document.getElementById('phone').value = currentUser.telefono || '';
-                  document.getElementById('specialty').value = currentUser.especialidad || '';
-              }
-
-              // ============================================================================
-              // FUNCIONES DE GESTIÓN (CRUD)
-              // ============================================================================
-
-              function addUser() {
-                  document.getElementById('userModalTitle').textContent = 'Agregar Usuario';
-                  document.getElementById('userForm').reset();
-                  document.getElementById('userModal').classList.remove('hidden');
-              }
-
-              async function editUser(userId) {
-                  try {
-                      const users = await fetchData('users');
-                      const user = users.find(u => u.id === userId);
-                      if (!user) return;
-
-                      document.getElementById('userModalTitle').textContent = 'Editar Usuario';
-                      document.getElementById('modalUserName').value = user.nombre;
-                      document.getElementById('modalUserEmail').value = user.email;
-                      document.getElementById('modalUserRole').value = user.rol;
-                      document.getElementById('modalUserPassword').value = user.password || '';
-                      document.getElementById('modalUserPhone').value = user.telefono || '';
-                      document.getElementById('modalUserSpecialty').value = user.especialidad || '';
-
-                      document.getElementById('userModal').classList.remove('hidden');
-                      document.getElementById('userModal').dataset.editId = userId;
-                  } catch (error) {
-                      showNotification('Error al cargar usuario', 'error');
-                  }
-              }
-
-              async function deleteUser(userId) {
-                  if (confirm('¿Estás seguro de que deseas eliminar este usuario?')) {
-                      try {
-                          await deleteRecord('users', userId);
-                          loadUsers();
-                          showNotification('Usuario eliminado exitosamente', 'success');
-                      } catch (error) {
-                          showNotification('Error al eliminar usuario', 'error');
-                      }
-                  }
-              }
-
-              async function addActivity() {
-                  document.getElementById('activityModalTitle').textContent = 'Nueva Actividad';
-                  document.getElementById('activityForm').reset();
-
-                  try {
-                      // Cargar usuarios disponibles
-                      const users = await fetchData('users');
-                      const assigneeSelect = document.getElementById('modalActivityAssignee');
-                      let availableUsers = users;
-
-                      if (currentUser.rol === 'profesor') {
-                          availableUsers = users.filter(u => u.rol === 'docente' || u.rol === 'profesor');
-                      }
-
-                      assigneeSelect.innerHTML = '<option value="">Seleccionar usuario</option>' +
-                          availableUsers.map(user => `<option value="${user.id}">${user.nombre}</option>`).join('');
-
-                      document.getElementById('activityModal').classList.remove('hidden');
-                  } catch (error) {
-                      showNotification('Error al cargar usuarios', 'error');
-                  }
-              }
-
-              async function editActivity(activityId) {
-                  try {
-                      const [activities, users] = await Promise.all([
-                          fetchData('activities'),
-                          fetchData('users')
-                      ]);
-
-                      const activity = activities.find(a => a.id === activityId);
-                      if (!activity) return;
-
-                      document.getElementById('activityModalTitle').textContent = 'Editar Actividad';
-                      document.getElementById('modalActivityTitle').value = activity.titulo;
-                      document.getElementById('modalActivityDescription').value = activity.descripcion;
-                      document.getElementById('modalActivityDeadline').value = activity.fechaLimite;
-                      document.getElementById('modalActivityPriority').value = activity.prioridad;
-                      document.getElementById('modalActivityStatus').value = activity.estado;
-                      document.getElementById('modalActivityNotes').value = activity.notas || '';
-
-                      // Cargar usuarios disponibles
-                      const assigneeSelect = document.getElementById('modalActivityAssignee');
-                      let availableUsers = users;
-
-                      if (currentUser.rol === 'profesor') {
-                          availableUsers = users.filter(u => u.rol === 'docente' || u.rol === 'profesor');
-                      }
-
-                      assigneeSelect.innerHTML = '<option value="">Seleccionar usuario</option>' +
-                          availableUsers.map(user => `<option value="${user.id}">${user.nombre}</option>`).join('');
-
-                      assigneeSelect.value = activity.asignadoA;
-
-                      document.getElementById('activityModal').classList.remove('hidden');
-                      document.getElementById('activityModal').dataset.editId = activityId;
-                  } catch (error) {
-                      showNotification('Error al cargar actividad', 'error');
-                  }
-              }
-
-              async function deleteActivity(activityId) {
-                  if (confirm('¿Estás seguro de que deseas eliminar esta actividad?')) {
-                      try {
-                          await deleteRecord('activities', activityId);
-                          loadActivities();
-                          showNotification('Actividad eliminada exitosamente', 'success');
-                      } catch (error) {
-                          showNotification('Error al eliminar actividad', 'error');
-                      }
-                  }
-              }
-
-              function addTeacher() {
-                  document.getElementById('teacherModalTitle').textContent = 'Agregar Docente';
-                  document.getElementById('teacherForm').reset();
-                  document.getElementById('teacherModal').classList.remove('hidden');
-              }
-
-              async function editTeacher(teacherId) {
-                  try {
-                      const teachers = await fetchData('teachers');
-                      const teacher = teachers.find(t => t.id === teacherId);
-                      if (!teacher) return;
-
-                      document.getElementById('teacherModalTitle').textContent = 'Editar Docente';
-                      document.getElementById('modalTeacherName').value = teacher.nombre;
-                      document.getElementById('modalTeacherEmail').value = teacher.email;
-                      document.getElementById('modalTeacherSpecialty').value = teacher.especialidad;
-                      document.getElementById('modalTeacherPhone').value = teacher.telefono;
-                      document.getElementById('modalTeacherStatus').value = teacher.estado;
-                      document.getElementById('modalTeacherNotes').value = teacher.notas || '';
-
-                      document.getElementById('teacherModal').classList.remove('hidden');
-                      document.getElementById('teacherModal').dataset.editId = teacherId;
-                  } catch (error) {
-                      showNotification('Error al cargar docente', 'error');
-                  }
-              }
-
-              async function deleteTeacher(teacherId) {
-                  if (confirm('¿Estás seguro de que deseas eliminar este docente?')) {
-                      try {
-                          await deleteRecord('teachers', teacherId);
-                          loadTeachers();
-                          showNotification('Docente eliminado exitosamente', 'success');
-                      } catch (error) {
-                          showNotification('Error al eliminar docente', 'error');
-                      }
-                  }
-              }
-
-              async function generateIndividualReport() {
-                  const userId = document.getElementById('userSelect').value;
-                  if (!userId) {
-                      showNotification('Por favor selecciona un usuario', 'warning');
-                      return;
-                  }
-
-                  try {
-                      const users = await fetchData('users');
-                      const user = users.find(u => u.id == userId);
-
-                      showNotification(`Generando reporte individual para ${user.nombre}...`, 'info');
-
-                      const reportData = {
-                          type: 'individual',
-                          userId: parseInt(userId),
-                          generatedBy: currentUser.id
-                      };
-
-                      await generateReport(reportData);
-                      showNotification('Reporte individual generado exitosamente', 'success');
-                      loadReports(); // Recargar para mostrar el nuevo progreso
-                  } catch (error) {
-                      showNotification('Error al generar reporte individual', 'error');
-                  }
-              }
-
-              async function generateGeneralReport() {
-                  const startDate = document.getElementById('startDate').value;
-                  const endDate = document.getElementById('endDate').value;
-
-                  if (!startDate || !endDate) {
-                      showNotification('Por favor selecciona las fechas', 'warning');
-                      return;
-                  }
-
-                  try {
-                      showNotification('Generando reporte general...', 'info');
-
-                      const reportData = {
-                          type: 'general',
-                          startDate,
-                          endDate,
-                          generatedBy: currentUser.id
-                      };
-
-                      await generateReport(reportData);
-                      showNotification('Reporte general generado exitosamente', 'success');
-                      loadReports(); // Recargar para mostrar el nuevo progreso
-                  } catch (error) {
-                      showNotification('Error al generar reporte general', 'error');
-                  }
-              }
-
-              /**
-               * Actualiza las estadísticas de sincronización en el dropdown
-               */
-              function updateSyncStats() {
-                  const stats = getSyncStats();
-                  const statsElement = document.getElementById('syncStats');
-
-                  const lastSyncTimes = Object.entries(stats.lastSyncTimes)
-                      .filter(([key]) => key.startsWith(currentCareer))
-                      .map(([key, time]) => {
-                          const type = key.split('_')[1];
-                          const date = new Date(time);
-                          return `${type}: ${date.toLocaleTimeString()}`;
-                      });
-
-                  statsElement.innerHTML = `
-                      <div class="space-y-1">
-                          <div>Estado: ${stats.isActive ? '🟢 Activa' : '🔴 Inactiva'}</div>
-                          <div>Frecuencia: ${stats.frequency}s</div>
-                          <div>Conexión: ${stats.isOnline ? '🟢 Online' : '🔴 Offline'}</div>
-                          <div>Google Sheets: ${GOOGLE_SCRIPT_URL ? '🟢 Configurado' : '🔴 No configurado'}</div>
-                          ${stats.retryAttempts > 0 ? `<div>Reintentos: ${stats.retryAttempts}/${maxRetryAttempts}</div>` : ''}
-                          ${lastSyncTimes.length > 0 ? `
-                              <div class="mt-2">
-                                  <div class="font-medium">Última sincronización:</div>
-                                  ${lastSyncTimes.map(time => `<div class="ml-2">• ${time}</div>`).join('')}
-                              </div>
-                          ` : ''}
-                      </div>
-                  `;
-              }
-
-              // ============================================================================
-              // EVENT LISTENERS
-              // ============================================================================
-
-              document.addEventListener('DOMContentLoaded', function() {
-                  // Configurar det
-      <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9768aa92c13b83f1',t:'MTc1NjQzNTA0NC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();
+          const notification = document.createElement("div");
+          notification.className = `notification-enter flex items-center text-white text-sm font-bold px-4 py-3 rounded-md shadow-lg mb-2 ${colors[type]}`;
+          notification.innerHTML = `<i class="fas ${icon[type]} mr-2"></i> <p>${message}</p>`;
+
+          this.selectors.notificationContainer.appendChild(notification);
+
+          setTimeout(() => {
+            notification.remove();
+          }, 5000); // La notificación desaparece después de 5 segundos
+        },
+
+        loadDashboardData() {
+          // Aquí llamaremos a las funciones del backend para obtener usuarios, actividades, etc.
+          // Ejemplo: google.script.run.withSuccessHandler(this.displayUsers).getRecords('users', this.state.selectedCareer);
+          console.log("Cargando datos del dashboard...");
+        },
+      };
+
+      // Punto de entrada: Iniciar la aplicación cuando el contenido de la página esté listo.
+      document.addEventListener("DOMContentLoaded", () => app.init());
     </script>
   </body>
 </html>
