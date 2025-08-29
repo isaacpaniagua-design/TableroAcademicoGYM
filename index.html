@@ -1,1887 +1,2540 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tablero de Control Académico - ITSON</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EduControl Pro - Tablero Docente Académico</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
     <style>
-        .gradient-bg {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+      body {
+        font-family: "Inter", sans-serif;
+      }
+      .gradient-bg {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      }
+      .gradient-software {
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+      }
+      .gradient-mecatronica {
+        background: linear-gradient(135deg, #059669 0%, #0d9488 100%);
+      }
+      .card-shadow {
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      }
+      .notification-enter {
+        animation: slideInRight 0.3s ease-out;
+      }
+      @keyframes slideInRight {
+        from {
+          transform: translateX(100%);
+          opacity: 0;
         }
-        .card-shadow {
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        to {
+          transform: translateX(0);
+          opacity: 1;
         }
-        .hover-scale {
-            transition: transform 0.2s ease;
+      }
+      .fade-in {
+        animation: fadeIn 0.5s ease-in;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
         }
-        .hover-scale:hover {
-            transform: scale(1.02);
+        to {
+          opacity: 1;
+          transform: translateY(0);
         }
+      }
+      .career-badge-software {
+        @apply bg-indigo-100 text-indigo-800;
+      }
+      .career-badge-mecatronica {
+        @apply bg-emerald-100 text-emerald-800;
+      }
+      .data-structure-comment {
+        color: #10b981;
+        font-style: italic;
+      }
+      .loading-overlay {
+        background: rgba(0, 0, 0, 0.5);
+      }
     </style>
-</head>
-<body class="bg-gray-50 min-h-screen">
-    <!-- Login Screen -->
-    <div id="loginScreen" class="min-h-screen gradient-bg flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl card-shadow p-8 w-full max-w-md">
-            <div class="text-center mb-8">
-                <div class="bg-blue-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <i class="fas fa-graduation-cap text-3xl text-blue-600"></i>
-                </div>
-                <h1 class="text-2xl font-bold text-gray-800 mb-2">Control Académico ITSON</h1>
-                <p class="text-gray-600">Sistema de Gestión Docente</p>
+  </head>
+  <body class="bg-gray-50">
+    <!-- 
+    ESTRUCTURA DE BASE DE DATOS GOOGLE SHEETS
+    ==========================================
+    
+    CARRERA: INGENIERÍA EN SOFTWARE (ID: 11DL5I9Zcxm-SdQ9cXRAO-j_InMYHs36qZOk6QRIVMKI)
+    Hoja 1 - Usuario: ID | Email | Rol | Nombre | Password | Fecha Registro | Estado | Telefono | Especialidad
+    Hoja 2 - Actividades: ID | Título | Descripción | Fecha Límite | Prioridad | Estado | Asignado a | Creado por | Fecha Creación | Fecha Completado | Notas
+    Hoja 3 - Progreso: Fecha | Período Inicio | Período Fin | Total Actividades | Completadas | Total Docentes | Generado por
+    Hoja 4 - Docentes: ID | Nombre | Email | Especialidad | Teléfono | Estado | Fecha Registro | Notas
+    
+    CARRERA: INGENIERÍA EN MECATRÓNICA Y MANUFACTURA (ID: 1hO1kMdw7LDlXePyjJRj4d4dd-v7cQ1dm8TCkU7izqR8)
+    Hoja 1 - Usuario: ID | Email | Rol | Nombre | Password | Fecha Registro | Estado | Telefono | Especialidad
+    Hoja 2 - Actividades: ID | Título | Descripción | Fecha Límite | Prioridad | Estado | Asignado a | Creado por | Fecha Creación | Fecha Completado | Notas
+    Hoja 3 - Progreso: Fecha | Período Inicio | Período Fin | Total Actividades | Completadas | Total Docentes | Generado por
+    Hoja 4 - Docentes: ID | Nombre | Email | Especialidad | Teléfono | Estado | Fecha Registro | Notas
+    -->
+
+    <!-- Contenedor de Notificaciones -->
+    <div id="notifications" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
+    <!-- Indicador de Carga -->
+    <div
+      id="loadingIndicator"
+      class="hidden fixed top-4 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg z-50"
+    >
+      <i class="fas fa-spinner fa-spin mr-2"></i>Sincronizando con Google
+      Sheets...
+    </div>
+
+    <!-- Pantalla de Login -->
+    <div
+      id="loginScreen"
+      class="min-h-screen gradient-bg flex items-center justify-center p-4"
+    >
+      <div class="bg-white rounded-2xl card-shadow p-8 w-full max-w-md fade-in">
+        <div class="text-center mb-8">
+          <div
+            class="w-16 h-16 bg-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4"
+          >
+            <i class="fas fa-graduation-cap text-white text-2xl"></i>
+          </div>
+          <h1 class="text-3xl font-bold text-gray-800">EduControl Pro</h1>
+          <p class="text-gray-600 mt-2">Tablero Docente Académico</p>
+          <p class="text-sm text-gray-500 mt-1">
+            Sistema Multi-Carrera con Google Sheets
+          </p>
+        </div>
+
+        <form id="loginForm" class="space-y-6">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2"
+              >Carrera</label
+            >
+            <select
+              id="career"
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              required
+            >
+              <option value="">Seleccionar carrera</option>
+              <option value="software">Ingeniería en Software</option>
+              <option value="mecatronica">
+                Ingeniería en Mecatrónica y Manufactura
+              </option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2"
+              >Email</label
+            >
+            <input
+              type="email"
+              id="email"
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              placeholder="Ingresa tu email"
+              required
+            />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2"
+              >Contraseña</label
+            >
+            <input
+              type="password"
+              id="password"
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              placeholder="Ingresa tu contraseña"
+              required
+            />
+          </div>
+
+          <button
+            type="submit"
+            class="w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 transition duration-200 font-medium"
+          >
+            Iniciar Sesión
+          </button>
+        </form>
+
+        <div class="mt-6 text-center">
+          <button
+            id="resetPasswordBtn"
+            class="text-indigo-600 hover:text-indigo-800 text-sm"
+          >
+            ¿Olvidaste tu contraseña?
+          </button>
+        </div>
+
+        <!-- Usuarios de prueba -->
+        <div class="mt-8 p-4 bg-gray-50 rounded-lg">
+          <p class="text-xs text-gray-600 mb-2">
+            Usuarios de prueba (ambas carreras):
+          </p>
+          <div class="text-xs space-y-1">
+            <p><strong>Admin:</strong> admin@edu.com / admin123</p>
+            <p><strong>Profesor:</strong> profesor@edu.com / prof123</p>
+            <p><strong>Docente:</strong> docente@edu.com / doc123</p>
+          </div>
+          <p class="text-xs text-green-600 mt-2">
+            ✅ Datos almacenados en Google Sheets
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dashboard Principal -->
+    <div id="dashboard" class="hidden min-h-screen bg-gray-50">
+      <!-- Header -->
+      <header class="bg-white shadow-sm border-b border-gray-200">
+        <div class="flex items-center justify-between px-6 py-4">
+          <div class="flex items-center space-x-4">
+            <div
+              id="headerCareerIcon"
+              class="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center"
+            >
+              <i class="fas fa-graduation-cap text-white"></i>
             </div>
-            
-            <form id="loginForm" class="space-y-6">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Correo Electrónico</label>
-                    <input type="email" id="loginEmail" required 
-                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                           placeholder="usuario@itson.edu.mx">
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Contraseña</label>
-                    <input type="password" id="loginPassword" required 
-                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                           placeholder="••••••••">
-                </div>
-                
-                <button type="submit" 
-                        class="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors">
-                    <i class="fas fa-sign-in-alt mr-2"></i>Iniciar Sesión
-                </button>
-            </form>
-            
-            <div class="mt-6 text-center">
-                <div class="loading-indicator hidden">
-                    <div class="flex items-center justify-center space-x-2">
-                        <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                        <span class="text-sm text-gray-600">Conectando con Google Sheets...</span>
-                    </div>
-                </div>
-                <p class="text-sm text-gray-500">
-                    Credenciales: isaac.paniagua@itson.edu.mx / admin123
+            <div>
+              <h1 class="text-xl font-semibold text-gray-800">
+                EduControl Pro
+              </h1>
+              <p id="headerCareerName" class="text-sm text-gray-600">Carrera</p>
+            </div>
+          </div>
+
+          <div class="flex items-center space-x-4">
+            <!-- Selector de Carrera (Solo Admin) -->
+            <div id="careerSelector" class="hidden">
+              <select
+                id="switchCareer"
+                class="px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              >
+                <option value="software">Ing. Software</option>
+                <option value="mecatronica">Ing. Mecatrónica</option>
+              </select>
+            </div>
+
+            <!-- Estado de Conexión -->
+            <div id="connectionStatus" class="flex items-center space-x-2">
+              <div
+                class="w-3 h-3 bg-green-500 rounded-full animate-pulse"
+              ></div>
+              <span class="text-xs text-gray-600">Google Sheets</span>
+            </div>
+
+            <!-- Notificaciones -->
+            <button
+              id="notificationBtn"
+              class="relative p-2 text-gray-600 hover:text-gray-800"
+            >
+              <i class="fas fa-bell text-xl"></i>
+              <span
+                id="notificationBadge"
+                class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center"
+                >2</span
+              >
+            </button>
+
+            <!-- Perfil -->
+            <div class="flex items-center space-x-3">
+              <img
+                id="headerProfileImg"
+                src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Ccircle cx='20' cy='20' r='20' fill='%23e5e7eb'/%3E%3Cpath d='M20 20c3.3 0 6-2.7 6-6s-2.7-6-6-6-6 2.7-6 6 2.7 6 6 6zm0 2c-4 0-12 2-12 6v2h24v-2c0-4-8-6-12-6z' fill='%236b7280'/%3E%3C/svg%3E"
+                alt="Perfil"
+                class="w-10 h-10 rounded-full"
+              />
+              <div>
+                <p
+                  id="headerUserName"
+                  class="text-sm font-medium text-gray-800"
+                >
+                  Usuario
                 </p>
+                <p id="headerUserRole" class="text-xs text-gray-600">Rol</p>
+              </div>
             </div>
+
+            <button id="logoutBtn" class="text-gray-600 hover:text-gray-800">
+              <i class="fas fa-sign-out-alt text-xl"></i>
+            </button>
+          </div>
         </div>
-    </div>
+      </header>
 
-    <!-- Main Dashboard -->
-    <div id="dashboard" class="hidden">
-        <!-- Header -->
-        <header class="bg-white shadow-sm border-b">
-            <div class="px-6 py-4">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center space-x-4">
-                        <div class="bg-blue-100 w-10 h-10 rounded-full flex items-center justify-center">
-                            <i class="fas fa-graduation-cap text-blue-600"></i>
-                        </div>
-                        <div>
-                            <h1 class="text-xl font-bold text-gray-800">Control Académico ITSON</h1>
-                            <p class="text-sm text-gray-600" id="userWelcome">Bienvenido, Isaac Paniagua</p>
-                        </div>
-                    </div>
-                    
-                    <div class="flex items-center space-x-4">
-                        <div class="text-right">
-                            <p class="text-sm font-medium text-gray-800" id="currentUserName">Isaac Paniagua</p>
-                            <p class="text-xs text-gray-500" id="currentUserRole">Administrador</p>
-                        </div>
-                        <button onclick="logout()" class="text-gray-500 hover:text-red-600 transition-colors">
-                            <i class="fas fa-sign-out-alt text-lg"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </header>
+      <div class="flex">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-white shadow-sm min-h-screen">
+          <nav class="p-6">
+            <ul id="sidebarMenu" class="space-y-2">
+              <!-- El menú se genera dinámicamente según el rol -->
+            </ul>
+          </nav>
+        </aside>
 
-        <!-- Navigation Tabs -->
-        <div class="bg-white border-b">
-            <div class="px-6">
-                <nav class="flex space-x-8">
-                    <button onclick="showTab('overview')" id="tab-overview" 
-                            class="py-4 px-2 border-b-2 border-blue-500 text-blue-600 font-medium">
-                        <i class="fas fa-chart-dashboard mr-2"></i>Resumen
-                    </button>
-                    <button onclick="showTab('users')" id="tab-users" 
-                            class="py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700 font-medium">
-                        <i class="fas fa-users mr-2"></i>Gestión de Usuarios
-                    </button>
-                    <button onclick="showTab('activities')" id="tab-activities" 
-                            class="py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700 font-medium">
-                        <i class="fas fa-tasks mr-2"></i>Actividades
-                    </button>
-                    <button onclick="showTab('reports')" id="tab-reports" 
-                            class="py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700 font-medium">
-                        <i class="fas fa-chart-bar mr-2"></i>Reportes
-                    </button>
-                </nav>
-            </div>
-        </div>
-
-        <!-- Content Area -->
-        <main class="p-6">
-            <!-- Overview Tab -->
-            <div id="content-overview" class="tab-content">
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                    <!-- Stats Cards -->
-                    <div class="bg-white rounded-xl card-shadow p-6 hover-scale">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-sm font-medium text-gray-600">Total Docentes</p>
-                                <p class="text-3xl font-bold text-gray-900" id="totalTeachers">0</p>
-                            </div>
-                            <div class="bg-blue-100 w-12 h-12 rounded-full flex items-center justify-center">
-                                <i class="fas fa-chalkboard-teacher text-blue-600"></i>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="bg-white rounded-xl card-shadow p-6 hover-scale">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-sm font-medium text-gray-600">Actividades Activas</p>
-                                <p class="text-3xl font-bold text-gray-900" id="activeActivities">0</p>
-                            </div>
-                            <div class="bg-green-100 w-12 h-12 rounded-full flex items-center justify-center">
-                                <i class="fas fa-tasks text-green-600"></i>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="bg-white rounded-xl card-shadow p-6 hover-scale">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-sm font-medium text-gray-600">Ing. Software</p>
-                                <p class="text-3xl font-bold text-gray-900" id="softwareTeachers">0</p>
-                            </div>
-                            <div class="bg-purple-100 w-12 h-12 rounded-full flex items-center justify-center">
-                                <i class="fas fa-code text-purple-600"></i>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="bg-white rounded-xl card-shadow p-6 hover-scale">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-sm font-medium text-gray-600">Ing. Mecatrónica</p>
-                                <p class="text-3xl font-bold text-gray-900" id="mechatronicsTeachers">0</p>
-                            </div>
-                            <div class="bg-orange-100 w-12 h-12 rounded-full flex items-center justify-center">
-                                <i class="fas fa-cogs text-orange-600"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Google Sheets Status -->
-                <div class="bg-white rounded-xl card-shadow p-6 mb-6">
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4">
-                        <i class="fas fa-cloud mr-2 text-green-600"></i>Estado de Google Sheets
-                    </h3>
-                    <div id="sheetsStatus" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <!-- Status will be populated here -->
-                    </div>
-                </div>
-
-                <!-- Recent Activities -->
-                <div class="bg-white rounded-xl card-shadow p-6">
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4">
-                        <i class="fas fa-clock mr-2 text-blue-600"></i>Actividades Recientes
-                    </h3>
-                    <div class="space-y-4" id="recentActivities">
-                        <!-- Recent activities will be populated here -->
-                    </div>
-                </div>
+        <!-- Contenido Principal -->
+        <main class="flex-1 p-6">
+          <!-- Dashboard Overview -->
+          <div id="overviewSection" class="fade-in">
+            <div class="mb-6">
+              <h2 class="text-2xl font-bold text-gray-800">Panel de Control</h2>
+              <p class="text-gray-600">Bienvenido a tu tablero académico</p>
+              <div id="currentCareerBadge" class="mt-2">
+                <!-- Badge de carrera actual -->
+              </div>
             </div>
 
-            <!-- Users Management Tab -->
-            <div id="content-users" class="tab-content hidden">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-bold text-gray-800">Gestión de Usuarios</h2>
-                    <button onclick="showAddUserModal()" 
-                            class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-                        <i class="fas fa-plus mr-2"></i>Agregar Usuario
-                    </button>
-                </div>
-
-                <!-- Filter Tabs -->
-                <div class="bg-white rounded-xl card-shadow mb-6">
-                    <div class="p-4 border-b">
-                        <div class="flex space-x-4">
-                            <button onclick="filterUsers('all')" id="filter-all" 
-                                    class="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg font-medium">
-                                Todos
-                            </button>
-                            <button onclick="filterUsers('software')" id="filter-software" 
-                                    class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg font-medium">
-                                Ing. Software
-                            </button>
-                            <button onclick="filterUsers('mechatronics')" id="filter-mechatronics" 
-                                    class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg font-medium">
-                                Ing. Mecatrónica
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <div class="p-4">
-                        <div class="overflow-x-auto">
-                            <table class="w-full">
-                                <thead>
-                                    <tr class="text-left text-sm font-medium text-gray-600">
-                                        <th class="pb-3">Usuario</th>
-                                        <th class="pb-3">Programa</th>
-                                        <th class="pb-3">Rol</th>
-                                        <th class="pb-3">Estado</th>
-                                        <th class="pb-3">Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="usersTable" class="text-sm">
-                                    <!-- Users will be populated here -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
+            <!-- Estadísticas -->
+            <div
+              id="statsCards"
+              class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
+            >
+              <!-- Las tarjetas se generan dinámicamente -->
             </div>
 
-            <!-- Activities Tab -->
-            <div id="content-activities" class="tab-content hidden">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-bold text-gray-800">Gestión de Actividades</h2>
-                    <button onclick="showAddActivityModal()" 
-                            class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
-                        <i class="fas fa-plus mr-2"></i>Nueva Actividad
-                    </button>
+            <!-- Gráficos y Actividad Reciente -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div class="bg-white rounded-xl card-shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                  Progreso Mensual
+                </h3>
+                <div
+                  class="h-64 flex items-center justify-center bg-gray-50 rounded-lg"
+                >
+                  <div class="text-center">
+                    <i
+                      class="fas fa-chart-line text-4xl text-gray-400 mb-2"
+                    ></i>
+                    <p class="text-gray-600">Gráfico de progreso</p>
+                    <p class="text-xs text-gray-500 mt-2">
+                      Datos sincronizados con Google Sheets
+                    </p>
+                  </div>
                 </div>
+              </div>
 
-                <div class="bg-white rounded-xl card-shadow">
-                    <div class="p-6">
-                        <div id="activitiesList">
-                            <!-- Activities will be populated here -->
-                        </div>
-                    </div>
+              <div class="bg-white rounded-xl card-shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                  Actividad Reciente
+                </h3>
+                <div id="recentActivity" class="space-y-3">
+                  <!-- Actividades recientes se generan dinámicamente -->
                 </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Gestión de Usuarios -->
+          <div id="usersSection" class="hidden fade-in">
+            <div class="flex justify-between items-center mb-6">
+              <div>
+                <h2 class="text-2xl font-bold text-gray-800">
+                  Gestión de Usuarios
+                </h2>
+                <p class="text-gray-600">Administra usuarios del sistema</p>
+              </div>
+              <button
+                id="addUserBtn"
+                class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition duration-200"
+              >
+                <i class="fas fa-plus mr-2"></i>Agregar Usuario
+              </button>
             </div>
 
-            <!-- Reports Tab -->
-            <div id="content-reports" class="tab-content hidden">
-                <h2 class="text-2xl font-bold text-gray-800 mb-6">Reportes y Estadísticas</h2>
-                
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                    <div class="bg-white rounded-xl card-shadow p-6">
-                        <h3 class="text-lg font-semibold text-gray-800 mb-4">Progreso por Programa</h3>
-                        <div class="space-y-4">
-                            <div>
-                                <div class="flex justify-between text-sm mb-1">
-                                    <span>Ingeniería en Software</span>
-                                    <span id="softwareProgress">0%</span>
-                                </div>
-                                <div class="w-full bg-gray-200 rounded-full h-2">
-                                    <div class="bg-purple-600 h-2 rounded-full" id="softwareProgressBar" style="width: 0%"></div>
-                                </div>
-                            </div>
-                            <div>
-                                <div class="flex justify-between text-sm mb-1">
-                                    <span>Ing. Mecatrónica y Manufactura</span>
-                                    <span id="mechatronicsProgress">0%</span>
-                                </div>
-                                <div class="w-full bg-gray-200 rounded-full h-2">
-                                    <div class="bg-orange-600 h-2 rounded-full" id="mechatronicsProgressBar" style="width: 0%"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="bg-white rounded-xl card-shadow p-6">
-                        <h3 class="text-lg font-semibold text-gray-800 mb-4">Actividades por Estado</h3>
-                        <div class="space-y-3">
-                            <div class="flex justify-between items-center">
-                                <span class="text-sm text-gray-600">Completadas</span>
-                                <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium" id="completedCount">0</span>
-                            </div>
-                            <div class="flex justify-between items-center">
-                                <span class="text-sm text-gray-600">En Progreso</span>
-                                <span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-medium" id="inProgressCount">0</span>
-                            </div>
-                            <div class="flex justify-between items-center">
-                                <span class="text-sm text-gray-600">Pendientes</span>
-                                <span class="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium" id="pendingCount">0</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Admin Panel -->
-                <div id="adminPanel" class="bg-white rounded-xl card-shadow p-6">
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4">
-                        <i class="fas fa-shield-alt mr-2 text-red-600"></i>Panel de Administración
-                    </h3>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="text-sm font-medium text-blue-800">Sincronización</span>
-                                <i class="fas fa-sync-alt text-blue-600" id="syncIcon"></i>
-                            </div>
-                            <p class="text-xs text-blue-600" id="syncStatus">Conectando...</p>
-                        </div>
-                        
-                        <div class="bg-green-50 border border-green-200 rounded-lg p-4">
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="text-sm font-medium text-green-800">Última Actualización</span>
-                                <i class="fas fa-clock text-green-600"></i>
-                            </div>
-                            <p class="text-xs text-green-600" id="lastUpdateTime">Cargando...</p>
-                        </div>
-                        
-                        <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="text-sm font-medium text-purple-800">Total Registros</span>
-                                <i class="fas fa-chart-bar text-purple-600"></i>
-                            </div>
-                            <p class="text-xs text-purple-600" id="totalRecords">Calculando...</p>
-                        </div>
-                    </div>
-                    
-                    <div class="border-t pt-4">
-                        <h4 class="font-medium text-gray-800 mb-3">Acciones de Administrador</h4>
-                        <div class="flex flex-wrap gap-3">
-                            <button onclick="syncWithSheets()" 
-                                    class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm">
-                                <i class="fas fa-sync mr-2"></i>Sincronizar con Sheets
-                            </button>
-                            
-                            <button onclick="exportData()" 
-                                    class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm">
-                                <i class="fas fa-download mr-2"></i>Exportar Datos
-                            </button>
-                            
-                            <button onclick="showDataSummary()" 
-                                    class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm">
-                                <i class="fas fa-chart-line mr-2"></i>Resumen Detallado
-                            </button>
-                            
-                            <button onclick="clearAllData()" 
-                                    class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors text-sm">
-                                <i class="fas fa-trash-alt mr-2"></i>Reiniciar Sistema
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <div class="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                        <p class="text-sm text-yellow-800">
-                            <i class="fas fa-info-circle mr-2"></i>
-                            <strong>Importante:</strong> Los datos se sincronizan automáticamente con Google Sheets. Usa "Sincronizar" para forzar una actualización.
-                        </p>
-                    </div>
-                </div>
+            <div class="bg-white rounded-xl card-shadow overflow-hidden">
+              <div class="overflow-x-auto">
+                <table class="w-full">
+                  <thead class="bg-gray-50">
+                    <tr>
+                      <th
+                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        ID
+                      </th>
+                      <th
+                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        Usuario
+                      </th>
+                      <th
+                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        Email
+                      </th>
+                      <th
+                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        Rol
+                      </th>
+                      <th
+                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        Estado
+                      </th>
+                      <th
+                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        Fecha Registro
+                      </th>
+                      <th
+                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        Acciones
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody
+                    id="usersTable"
+                    class="bg-white divide-y divide-gray-200"
+                  >
+                    <!-- Usuarios se generan dinámicamente -->
+                  </tbody>
+                </table>
+              </div>
             </div>
+          </div>
+
+          <!-- Gestión de Actividades -->
+          <div id="activitiesSection" class="hidden fade-in">
+            <div class="flex justify-between items-center mb-6">
+              <div>
+                <h2 class="text-2xl font-bold text-gray-800">
+                  Gestión de Actividades
+                </h2>
+                <p class="text-gray-600">
+                  Administra las actividades académicas
+                </p>
+              </div>
+              <button
+                id="addActivityBtn"
+                class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition duration-200"
+              >
+                <i class="fas fa-plus mr-2"></i>Nueva Actividad
+              </button>
+            </div>
+
+            <div
+              class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+              id="activitiesGrid"
+            >
+              <!-- Actividades se generan dinámicamente -->
+            </div>
+          </div>
+
+          <!-- Gestión de Docentes -->
+          <div id="teachersSection" class="hidden fade-in">
+            <div class="flex justify-between items-center mb-6">
+              <div>
+                <h2 class="text-2xl font-bold text-gray-800">
+                  Gestión de Docentes
+                </h2>
+                <p class="text-gray-600">Administra el personal docente</p>
+              </div>
+              <button
+                id="addTeacherBtn"
+                class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-200"
+              >
+                <i class="fas fa-plus mr-2"></i>Agregar Docente
+              </button>
+            </div>
+
+            <div class="bg-white rounded-xl card-shadow overflow-hidden">
+              <div class="overflow-x-auto">
+                <table class="w-full">
+                  <thead class="bg-gray-50">
+                    <tr>
+                      <th
+                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        ID
+                      </th>
+                      <th
+                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        Nombre
+                      </th>
+                      <th
+                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        Email
+                      </th>
+                      <th
+                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        Especialidad
+                      </th>
+                      <th
+                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        Teléfono
+                      </th>
+                      <th
+                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        Estado
+                      </th>
+                      <th
+                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        Acciones
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody
+                    id="teachersTable"
+                    class="bg-white divide-y divide-gray-200"
+                  >
+                    <!-- Docentes se generan dinámicamente -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Reportes -->
+          <div id="reportsSection" class="hidden fade-in">
+            <div class="mb-6">
+              <h2 class="text-2xl font-bold text-gray-800">
+                Reportes y Análisis
+              </h2>
+              <p class="text-gray-600">
+                Genera reportes detallados del progreso académico
+              </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              <div class="bg-white rounded-xl card-shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                  Reportes Individuales
+                </h3>
+                <div class="space-y-4">
+                  <select
+                    id="userSelect"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                  >
+                    <option value="">Seleccionar usuario</option>
+                  </select>
+                  <button
+                    id="generateIndividualReport"
+                    class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition duration-200"
+                  >
+                    <i class="fas fa-file-pdf mr-2"></i>Generar Reporte
+                    Individual
+                  </button>
+                </div>
+              </div>
+
+              <div class="bg-white rounded-xl card-shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                  Reporte General
+                </h3>
+                <div class="space-y-4">
+                  <div class="flex space-x-2">
+                    <input
+                      type="date"
+                      id="startDate"
+                      class="flex-1 px-4 py-2 border border-gray-300 rounded-lg"
+                    />
+                    <input
+                      type="date"
+                      id="endDate"
+                      class="flex-1 px-4 py-2 border border-gray-300 rounded-lg"
+                    />
+                  </div>
+                  <button
+                    id="generateGeneralReport"
+                    class="w-full bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 transition duration-200"
+                  >
+                    <i class="fas fa-file-pdf mr-2"></i>Generar Reporte General
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Progreso Histórico -->
+            <div class="bg-white rounded-xl card-shadow p-6">
+              <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                Progreso Histórico
+              </h3>
+              <div id="progressHistory" class="overflow-x-auto">
+                <table class="w-full">
+                  <thead class="bg-gray-50">
+                    <tr>
+                      <th
+                        class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase"
+                      >
+                        Fecha
+                      </th>
+                      <th
+                        class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase"
+                      >
+                        Período
+                      </th>
+                      <th
+                        class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase"
+                      >
+                        Total Actividades
+                      </th>
+                      <th
+                        class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase"
+                      >
+                        Completadas
+                      </th>
+                      <th
+                        class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase"
+                      >
+                        Total Docentes
+                      </th>
+                      <th
+                        class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase"
+                      >
+                        Generado por
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody id="progressHistoryTable">
+                    <!-- Datos de progreso histórico -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Perfil -->
+          <div id="profileSection" class="hidden fade-in">
+            <div class="mb-6">
+              <h2 class="text-2xl font-bold text-gray-800">Mi Perfil</h2>
+              <p class="text-gray-600">Gestiona tu información personal</p>
+            </div>
+
+            <div class="bg-white rounded-xl card-shadow p-6">
+              <div class="flex items-center space-x-6 mb-6">
+                <div class="relative">
+                  <img
+                    id="profileImg"
+                    src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23e5e7eb'/%3E%3Cpath d='M50 50c8.25 0 15-6.75 15-15s-6.75-15-15-15-15 6.75-15 15 6.75 15 15 15zm0 5c-10 0-30 5-30 15v5h60v-5c0-10-20-15-30-15z' fill='%236b7280'/%3E%3C/svg%3E"
+                    alt="Foto de perfil"
+                    class="w-24 h-24 rounded-full"
+                  />
+                  <button
+                    id="changePhotoBtn"
+                    class="absolute bottom-0 right-0 bg-indigo-600 text-white p-2 rounded-full hover:bg-indigo-700 transition duration-200"
+                  >
+                    <i class="fas fa-camera text-sm"></i>
+                  </button>
+                </div>
+                <div>
+                  <h3
+                    id="profileName"
+                    class="text-xl font-semibold text-gray-800"
+                  >
+                    Nombre Usuario
+                  </h3>
+                  <p id="profileRole" class="text-gray-600">Rol del Usuario</p>
+                  <p id="profileEmail" class="text-gray-500">
+                    email@ejemplo.com
+                  </p>
+                  <div id="profileCareerBadge" class="mt-2">
+                    <!-- Badge de carrera -->
+                  </div>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2"
+                    >Nombre Completo</label
+                  >
+                  <input
+                    type="text"
+                    id="fullName"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                  />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2"
+                    >Email</label
+                  >
+                  <input
+                    type="email"
+                    id="emailProfile"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                  />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2"
+                    >Teléfono</label
+                  >
+                  <input
+                    type="tel"
+                    id="phone"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                  />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2"
+                    >Especialidad</label
+                  >
+                  <input
+                    type="text"
+                    id="specialty"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                  />
+                </div>
+              </div>
+
+              <div class="mt-6 flex space-x-4">
+                <button
+                  id="saveProfileBtn"
+                  class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition duration-200"
+                >
+                  <i class="fas fa-save mr-2"></i>Guardar Cambios
+                </button>
+                <button
+                  id="changePasswordBtn"
+                  class="bg-orange-600 text-white px-6 py-2 rounded-lg hover:bg-orange-700 transition duration-200"
+                >
+                  <i class="fas fa-key mr-2"></i>Cambiar Contraseña
+                </button>
+              </div>
+            </div>
+          </div>
         </main>
+      </div>
     </div>
 
-    <!-- Add User Modal -->
-    <div id="addUserModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-xl max-w-md w-full p-6">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-semibold text-gray-800">Agregar Nuevo Usuario</h3>
-                <button onclick="closeAddUserModal()" class="text-gray-500 hover:text-gray-700">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            
-            <form id="addUserForm" class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Nombre Completo</label>
-                    <input type="text" id="newUserName" required 
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Correo Electrónico</label>
-                    <input type="email" id="newUserEmail" required 
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Programa Educativo</label>
-                    <select id="newUserProgram" required 
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                        <option value="">Seleccionar programa</option>
-                        <option value="software">Ingeniería en Software</option>
-                        <option value="mechatronics">Ing. Mecatrónica y Manufactura</option>
-                    </select>
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Rol</label>
-                    <select id="newUserRole" required 
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                        <option value="">Seleccionar rol</option>
-                        <option value="docente">Docente</option>
-                        <option value="auxiliar">Profesor Auxiliar</option>
-                        <option value="admin">Administrador</option>
-                    </select>
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Especialidad</label>
-                    <input type="text" id="newUserSpecialty" 
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                           placeholder="Ej: Desarrollo Web, Inteligencia Artificial">
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
-                    <input type="tel" id="newUserPhone" 
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                           placeholder="Ej: +52 644 123 4567">
-                </div>
-                
-                <div class="flex space-x-3 pt-4">
-                    <button type="submit" 
-                            class="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors">
-                        Agregar Usuario
-                    </button>
-                    <button type="button" onclick="closeAddUserModal()" 
-                            class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400 transition-colors">
-                        Cancelar
-                    </button>
-                </div>
-            </form>
+    <!-- Modal para Agregar/Editar Usuario -->
+    <div
+      id="userModal"
+      class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+    >
+      <div class="bg-white rounded-xl p-6 w-full max-w-md mx-4">
+        <div class="flex justify-between items-center mb-4">
+          <h3 id="userModalTitle" class="text-lg font-semibold text-gray-800">
+            Agregar Usuario
+          </h3>
+          <button id="closeUserModal" class="text-gray-500 hover:text-gray-700">
+            <i class="fas fa-times"></i>
+          </button>
         </div>
+
+        <form id="userForm" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1"
+              >Nombre Completo</label
+            >
+            <input
+              type="text"
+              id="modalUserName"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg"
+              required
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1"
+              >Email</label
+            >
+            <input
+              type="email"
+              id="modalUserEmail"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg"
+              required
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1"
+              >Rol</label
+            >
+            <select
+              id="modalUserRole"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg"
+              required
+            >
+              <option value="">Seleccionar rol</option>
+              <option value="administrador">Administrador</option>
+              <option value="profesor">Profesor Auxiliar</option>
+              <option value="docente">Docente</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1"
+              >Contraseña</label
+            >
+            <input
+              type="password"
+              id="modalUserPassword"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg"
+              required
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1"
+              >Teléfono</label
+            >
+            <input
+              type="tel"
+              id="modalUserPhone"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1"
+              >Especialidad</label
+            >
+            <input
+              type="text"
+              id="modalUserSpecialty"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg"
+            />
+          </div>
+
+          <div class="flex space-x-3 pt-4">
+            <button
+              type="submit"
+              class="flex-1 bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition duration-200"
+            >
+              Guardar
+            </button>
+            <button
+              type="button"
+              id="cancelUserModal"
+              class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400 transition duration-200"
+            >
+              Cancelar
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
 
-    <!-- Add Activity Modal -->
-    <div id="addActivityModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-xl max-w-md w-full p-6">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-semibold text-gray-800">Nueva Actividad</h3>
-                <button onclick="closeAddActivityModal()" class="text-gray-500 hover:text-gray-700">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            
-            <form id="addActivityForm" class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Título de la Actividad</label>
-                    <input type="text" id="newActivityTitle" required 
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
-                    <textarea id="newActivityDescription" rows="3" 
-                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"></textarea>
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Programa Educativo</label>
-                    <select id="newActivityProgram" required 
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                        <option value="">Seleccionar programa</option>
-                        <option value="software">Ingeniería en Software</option>
-                        <option value="mechatronics">Ing. Mecatrónica y Manufactura</option>
-                    </select>
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Asignar a Docente</label>
-                    <select id="newActivityTeacher" required 
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                        <option value="">Seleccionar docente</option>
-                    </select>
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Prioridad</label>
-                    <select id="newActivityPriority" required 
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                        <option value="baja">Baja</option>
-                        <option value="media" selected>Media</option>
-                        <option value="alta">Alta</option>
-                        <option value="urgente">Urgente</option>
-                    </select>
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Fecha Límite</label>
-                    <input type="date" id="newActivityDeadline" required 
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                </div>
-                
-                <div class="flex space-x-3 pt-4">
-                    <button type="submit" 
-                            class="flex-1 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition-colors">
-                        Crear Actividad
-                    </button>
-                    <button type="button" onclick="closeAddActivityModal()" 
-                            class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400 transition-colors">
-                        Cancelar
-                    </button>
-                </div>
-            </form>
+    <!-- Modal para Actividades -->
+    <div
+      id="activityModal"
+      class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+    >
+      <div class="bg-white rounded-xl p-6 w-full max-w-lg mx-4">
+        <div class="flex justify-between items-center mb-4">
+          <h3
+            id="activityModalTitle"
+            class="text-lg font-semibold text-gray-800"
+          >
+            Nueva Actividad
+          </h3>
+          <button
+            id="closeActivityModal"
+            class="text-gray-500 hover:text-gray-700"
+          >
+            <i class="fas fa-times"></i>
+          </button>
         </div>
+
+        <form id="activityForm" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1"
+              >Título</label
+            >
+            <input
+              type="text"
+              id="modalActivityTitle"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg"
+              required
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1"
+              >Descripción</label
+            >
+            <textarea
+              id="modalActivityDescription"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg h-24"
+              required
+            ></textarea>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1"
+              >Fecha Límite</label
+            >
+            <input
+              type="date"
+              id="modalActivityDeadline"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg"
+              required
+            />
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1"
+                >Prioridad</label
+              >
+              <select
+                id="modalActivityPriority"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                required
+              >
+                <option value="baja">Baja</option>
+                <option value="media">Media</option>
+                <option value="alta">Alta</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1"
+                >Estado</label
+              >
+              <select
+                id="modalActivityStatus"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                required
+              >
+                <option value="pendiente">Pendiente</option>
+                <option value="en_progreso">En Progreso</option>
+                <option value="completada">Completada</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1"
+              >Asignar a</label
+            >
+            <select
+              id="modalActivityAssignee"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg"
+              required
+            >
+              <option value="">Seleccionar usuario</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1"
+              >Notas</label
+            >
+            <textarea
+              id="modalActivityNotes"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg h-20"
+              placeholder="Notas adicionales (opcional)"
+            ></textarea>
+          </div>
+
+          <div class="flex space-x-3 pt-4">
+            <button
+              type="submit"
+              class="flex-1 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition duration-200"
+            >
+              Guardar
+            </button>
+            <button
+              type="button"
+              id="cancelActivityModal"
+              class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400 transition duration-200"
+            >
+              Cancelar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal para Docentes -->
+    <div
+      id="teacherModal"
+      class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+    >
+      <div class="bg-white rounded-xl p-6 w-full max-w-md mx-4">
+        <div class="flex justify-between items-center mb-4">
+          <h3
+            id="teacherModalTitle"
+            class="text-lg font-semibold text-gray-800"
+          >
+            Agregar Docente
+          </h3>
+          <button
+            id="closeTeacherModal"
+            class="text-gray-500 hover:text-gray-700"
+          >
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+
+        <form id="teacherForm" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1"
+              >Nombre Completo</label
+            >
+            <input
+              type="text"
+              id="modalTeacherName"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg"
+              required
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1"
+              >Email</label
+            >
+            <input
+              type="email"
+              id="modalTeacherEmail"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg"
+              required
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1"
+              >Especialidad</label
+            >
+            <input
+              type="text"
+              id="modalTeacherSpecialty"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg"
+              required
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1"
+              >Teléfono</label
+            >
+            <input
+              type="tel"
+              id="modalTeacherPhone"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg"
+              required
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1"
+              >Estado</label
+            >
+            <select
+              id="modalTeacherStatus"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg"
+              required
+            >
+              <option value="activo">Activo</option>
+              <option value="inactivo">Inactivo</option>
+              <option value="licencia">En Licencia</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1"
+              >Notas</label
+            >
+            <textarea
+              id="modalTeacherNotes"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg h-20"
+              placeholder="Notas adicionales (opcional)"
+            ></textarea>
+          </div>
+
+          <div class="flex space-x-3 pt-4">
+            <button
+              type="submit"
+              class="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition duration-200"
+            >
+              Guardar
+            </button>
+            <button
+              type="button"
+              id="cancelTeacherModal"
+              class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400 transition duration-200"
+            >
+              Cancelar
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
 
     <script>
-        // Google Sheets Configuration - REAL INTEGRATION
-        const GOOGLE_SHEETS_CONFIG = {
-            software: {
-                id: '11DL5I9Zcxm-SdQ9cXRAO-j_InMYHs36qZOk6QRIVMKI',
-                docentesSheet: 'Docentes',
-                actividadesSheet: 'Actividades',
-                progresoSheet: 'Progreso',
-                usuariosSheet: 'Usuarios'
+      // CONEXIÓN CON GOOGLE SHEETS - DATOS REALES
+      // ==========================================
+
+      // ⚠️ IMPORTANTE: Reemplaza esta URL con la URL de tu Google Apps Script Web App
+      const GOOGLE_SCRIPT_URL =
+        "https://script.google.com/macros/s/AKfycbzKpSYn6PB2V7gVkNPFx0vjXJ_OfhHKqp9rJcdPmXNvmtsICxODUpse_O_nWFVLr8yRwg/exec";
+
+      let currentUser = null;
+      let currentCareer = "software"; // Por defecto
+      let cachedData = {
+        software: { users: [], activities: [], teachers: [], progress: [] },
+        mecatronica: { users: [], activities: [], teachers: [], progress: [] },
+      };
+
+      let notifications = [
+        {
+          id: 1,
+          message: "Sistema conectado con Google Sheets",
+          type: "success",
+          timestamp: new Date(),
+        },
+        {
+          id: 2,
+          message: "Datos sincronizados en tiempo real",
+          type: "info",
+          timestamp: new Date(),
+        },
+      ];
+
+      // ============================================================================
+      // FUNCIONES DE COMUNICACIÓN CON GOOGLE APPS SCRIPT
+      // ============================================================================
+
+      /**
+       * Realiza peticiones al Google Apps Script
+       */
+      async function callGoogleScript(
+        action,
+        type = null,
+        payload = null,
+        userId = null
+      ) {
+        try {
+          if (GOOGLE_SCRIPT_URL === "AQUI_VA_TU_URL_DEL_WEB_APP") {
+            throw new Error(
+              "⚠️ Debes configurar la URL de tu Google Apps Script en la línea 49"
+            );
+          }
+
+          showLoadingIndicator(true);
+
+          const requestData = {
+            action,
+            career: currentCareer,
+            type,
+            payload,
+            userId,
+          };
+
+          const response = await fetch(GOOGLE_SCRIPT_URL, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
             },
-            mechatronics: {
-                id: '1hO1kMdw7LDlXePyjJRj4d4dd-v7cQ1dm8TCkU7izqR8',
-                docentesSheet: 'Docentes',
-                actividadesSheet: 'Actividades', 
-                progresoSheet: 'Progreso',
-                usuariosSheet: 'Usuarios'
-            }
-        };
+            body: JSON.stringify(requestData),
+          });
 
-        // Global variables
-        let currentUser = null;
-        let users = [];
-        let activities = [];
-        let isLoading = false;
-        let sheetsConnected = false;
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
 
-        // Persistent Storage System
-        const STORAGE_KEYS = {
-            USERS: 'itson_users_data',
-            ACTIVITIES: 'itson_activities_data',
-            CURRENT_USER: 'itson_current_user',
-            LAST_SYNC: 'itson_last_sync'
-        };
+          const result = await response.json();
 
-        // REAL Google Sheets Integration Functions
-        function getSheetUrl(program, sheetName, range = '') {
-            const sheetId = GOOGLE_SHEETS_CONFIG[program].id;
-            const baseUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&sheet=${sheetName}`;
-            return range ? `${baseUrl}&range=${range}` : baseUrl;
+          if (!result.success) {
+            throw new Error(result.error || "Error desconocido");
+          }
+
+          return result;
+        } catch (error) {
+          console.error("Error en comunicación con Google Script:", error);
+          showNotification(`Error: ${error.message}`, "error");
+          throw error;
+        } finally {
+          showLoadingIndicator(false);
         }
+      }
 
-        function getSheetEditUrl(program, sheetName) {
-            const sheetId = GOOGLE_SHEETS_CONFIG[program].id;
-            return `https://docs.google.com/spreadsheets/d/${sheetId}/edit#gid=0`;
+      /**
+       * Autentica usuario con Google Sheets
+       */
+      async function authenticateUser(career, email, password) {
+        try {
+          const result = await callGoogleScript("login", null, {
+            email,
+            password,
+          });
+          return result.user;
+        } catch (error) {
+          return null;
         }
+      }
 
-        async function fetchFromGoogleSheets(program, sheetName, range = '') {
-            try {
-                const url = getSheetUrl(program, sheetName, range);
-                console.log(`Fetching from: ${url}`);
-                
-                const response = await fetch(url);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
-                const text = await response.text();
-                
-                // Parse Google Sheets JSON response
-                const jsonString = text.substring(47).slice(0, -2);
-                const data = JSON.parse(jsonString);
-                
-                if (!data.table || !data.table.rows) {
-                    console.log(`No data found in ${program} - ${sheetName}`);
-                    return [];
-                }
-                
-                const rows = data.table.rows.map(row => {
-                    const cells = row.c || [];
-                    return cells.map(cell => cell ? (cell.v || '') : '');
-                });
-                
-                console.log(`Loaded ${rows.length} rows from ${program} - ${sheetName}`);
-                return rows;
-                
-            } catch (error) {
-                console.error(`Error fetching data from ${program} - ${sheetName}:`, error);
-                showNotification(`Error conectando con ${program} - ${sheetName}`, 'error');
-                return [];
-            }
+      /**
+       * Obtiene datos de Google Sheets
+       */
+      async function fetchData(type, userId = null) {
+        try {
+          const result = await callGoogleScript("get", type, null, userId);
+          cachedData[currentCareer][type] = result.data;
+          return result.data;
+        } catch (error) {
+          // Si hay error, usar datos en caché si existen
+          return cachedData[currentCareer][type] || [];
         }
+      }
 
-        // REAL function to append data to Google Sheets
-        async function appendToGoogleSheet(program, sheetName, data) {
-            try {
-                // Since we can't directly write to Google Sheets from frontend without API key,
-                // we'll use the Google Forms approach or show instructions
-                
-                const sheetId = GOOGLE_SHEETS_CONFIG[program].id;
-                const editUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/edit`;
-                
-                // For now, we'll save locally and provide instructions
-                console.log(`Data to append to ${program} - ${sheetName}:`, data);
-                
-                // Save to local storage as backup
-                saveDataToStorage();
-                
-                // Show user the data that should be added to sheets
-                showSheetsInstructions(program, sheetName, data);
-                
-                return true;
-                
-            } catch (error) {
-                console.error(`Error appending to ${program} - ${sheetName}:`, error);
-                throw error;
-            }
+      /**
+       * Crea nuevo registro en Google Sheets
+       */
+      async function createRecord(type, data) {
+        try {
+          const result = await callGoogleScript("create", type, data);
+          // Actualizar caché local
+          await fetchData(type);
+          return result.data;
+        } catch (error) {
+          throw error;
         }
+      }
 
-        function showSheetsInstructions(program, sheetName, data) {
-            const programName = program === 'software' ? 'Ingeniería en Software' : 'Ing. Mecatrónica';
-            const sheetId = GOOGLE_SHEETS_CONFIG[program].id;
-            const editUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/edit`;
-            
-            let dataString = '';
-            if (Array.isArray(data)) {
-                dataString = data.join('\t'); // Tab separated for easy pasting
-            } else {
-                dataString = Object.values(data).join('\t');
-            }
-            
-            const instructions = `
-📋 DATOS GUARDADOS LOCALMENTE - SINCRONIZACIÓN REQUERIDA
-
-🎯 Programa: ${programName}
-📊 Hoja: ${sheetName}
-📝 Datos a agregar: ${dataString}
-
-🔗 Enlace a la hoja: ${editUrl}
-
-⚠️ INSTRUCCIONES:
-1. Haz clic en el enlace de arriba
-2. Ve a la hoja "${sheetName}"
-3. Agrega una nueva fila con los datos mostrados
-4. Los datos ya están guardados localmente como respaldo
-
-✅ El sistema continuará funcionando normalmente con los datos locales.
-            `;
-            
-            // Create a modal with instructions
-            const modal = document.createElement('div');
-            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50';
-            modal.innerHTML = `
-                <div class="bg-white rounded-xl max-w-2xl w-full p-6">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-lg font-semibold text-gray-800">
-                            <i class="fas fa-cloud-upload-alt mr-2 text-blue-600"></i>
-                            Sincronización con Google Sheets
-                        </h3>
-                        <button onclick="this.parentElement.parentElement.parentElement.remove()" 
-                                class="text-gray-500 hover:text-gray-700">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                        <pre class="text-sm text-blue-800 whitespace-pre-wrap">${instructions}</pre>
-                    </div>
-                    <div class="flex space-x-3">
-                        <a href="${editUrl}" target="_blank" 
-                           class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors text-center">
-                            <i class="fas fa-external-link-alt mr-2"></i>Abrir Google Sheets
-                        </a>
-                        <button onclick="this.parentElement.parentElement.parentElement.remove()" 
-                                class="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition-colors">
-                            Cerrar
-                        </button>
-                    </div>
-                </div>
-            `;
-            
-            document.body.appendChild(modal);
+      /**
+       * Actualiza registro en Google Sheets
+       */
+      async function updateRecord(type, data) {
+        try {
+          const result = await callGoogleScript("update", type, data);
+          // Actualizar caché local
+          await fetchData(type);
+          return result.data;
+        } catch (error) {
+          throw error;
         }
+      }
 
-        // Initialize system with REAL Google Sheets integration
-        async function initializeGoogleSheets() {
-            try {
-                setLoadingState(true);
-                updateSyncStatus('Conectando con Google Sheets...', 'loading');
-                
-                // Load persistent data first
-                loadDataFromStorage();
-                
-                // Try to connect to Google Sheets
-                let sheetsData = await loadDataFromSheets();
-                
-                if (sheetsData.success) {
-                    sheetsConnected = true;
-                    updateSyncStatus('Conectado con Google Sheets', 'success');
-                    showNotification('Datos sincronizados con Google Sheets', 'success');
-                } else {
-                    sheetsConnected = false;
-                    updateSyncStatus('Usando datos locales', 'warning');
-                    showNotification('Usando almacenamiento local. Datos guardados permanentemente.', 'info');
-                }
-                
-                // If no local data exists, create initial data
-                if (users.length === 0) {
-                    createInitialData();
-                    saveDataToStorage();
-                }
-                
-                setLoadingState(false);
-                updateSheetsStatus();
-                
-            } catch (error) {
-                console.error('Error initializing system:', error);
-                setLoadingState(false);
-                sheetsConnected = false;
-                updateSyncStatus('Error de conexión', 'error');
-                
-                // Fallback to local storage
-                loadDataFromStorage();
-                if (users.length === 0) {
-                    createInitialData();
-                    saveDataToStorage();
-                }
-                
-                showNotification('Sistema iniciado en modo local. Los datos se guardan permanentemente.', 'info');
-            }
+      /**
+       * Elimina registro de Google Sheets
+       */
+      async function deleteRecord(type, id) {
+        try {
+          await callGoogleScript("delete", type, { id });
+          // Actualizar caché local
+          await fetchData(type);
+          return true;
+        } catch (error) {
+          throw error;
         }
+      }
 
-        async function loadDataFromSheets() {
-            let success = false;
-            let loadedUsers = 0;
-            let loadedActivities = 0;
-            
-            try {
-                // Load users from both programs
-                for (const program of ['software', 'mechatronics']) {
-                    try {
-                        // Load from Usuarios sheet
-                        const userData = await fetchFromGoogleSheets(program, GOOGLE_SHEETS_CONFIG[program].usuariosSheet);
-                        if (userData.length > 1) { // Skip header row
-                            for (let i = 1; i < userData.length; i++) {
-                                const row = userData[i];
-                                if (row[0] && row[1]) { // Ensure we have at least ID and email
-                                    const user = {
-                                        id: row[0] || `${program}-${i}`,
-                                        email: row[1] || '',
-                                        role: row[2] || 'docente',
-                                        name: row[3] || '',
-                                        program: program,
-                                        createdAt: row[5] || new Date().toISOString(),
-                                        status: row[6] || 'active'
-                                    };
-                                    
-                                    // Check if user already exists
-                                    const existingIndex = users.findIndex(u => u.email === user.email);
-                                    if (existingIndex >= 0) {
-                                        users[existingIndex] = { ...users[existingIndex], ...user };
-                                    } else {
-                                        users.push(user);
-                                    }
-                                    loadedUsers++;
-                                }
-                            }
-                        }
-
-                        // Load from Docentes sheet
-                        const docentesData = await fetchFromGoogleSheets(program, GOOGLE_SHEETS_CONFIG[program].docentesSheet);
-                        if (docentesData.length > 1) { // Skip header row
-                            for (let i = 1; i < docentesData.length; i++) {
-                                const row = docentesData[i];
-                                if (row[0] && row[1] && row[2]) { // Ensure we have ID, name and email
-                                    const existingUser = users.find(u => u.email === row[2]);
-                                    if (existingUser) {
-                                        // Update existing user with docente info
-                                        existingUser.specialty = row[3] || '';
-                                        existingUser.phone = row[4] || '';
-                                        existingUser.notes = row[7] || '';
-                                    } else {
-                                        // Add new docente
-                                        users.push({
-                                            id: row[0] || `${program}-docente-${i}`,
-                                            name: row[1] || '',
-                                            email: row[2] || '',
-                                            specialty: row[3] || '',
-                                            phone: row[4] || '',
-                                            program: program,
-                                            role: 'docente',
-                                            status: row[5] || 'active',
-                                            createdAt: row[6] || new Date().toISOString(),
-                                            notes: row[7] || ''
-                                        });
-                                        loadedUsers++;
-                                    }
-                                }
-                            }
-                        }
-
-                        // Load activities
-                        const activitiesData = await fetchFromGoogleSheets(program, GOOGLE_SHEETS_CONFIG[program].actividadesSheet);
-                        if (activitiesData.length > 1) { // Skip header row
-                            for (let i = 1; i < activitiesData.length; i++) {
-                                const row = activitiesData[i];
-                                if (row[0] && row[1]) { // Ensure we have at least ID and title
-                                    const activity = {
-                                        id: row[0] || `${program}-${i}`,
-                                        title: row[1] || '',
-                                        description: row[2] || '',
-                                        deadline: row[3] || '',
-                                        priority: row[4] || 'media',
-                                        status: row[5] || 'pending',
-                                        assignedTo: row[6] || '',
-                                        createdBy: row[7] || '',
-                                        createdAt: row[8] || new Date().toISOString(),
-                                        completedAt: row[9] || '',
-                                        notes: row[10] || '',
-                                        program: program
-                                    };
-                                    
-                                    // Check if activity already exists
-                                    const existingIndex = activities.findIndex(a => a.id === activity.id);
-                                    if (existingIndex >= 0) {
-                                        activities[existingIndex] = activity;
-                                    } else {
-                                        activities.push(activity);
-                                    }
-                                    loadedActivities++;
-                                }
-                            }
-                        }
-                        
-                        success = true;
-                        
-                    } catch (error) {
-                        console.error(`Error loading data from ${program}:`, error);
-                    }
-                }
-                
-                // Add admin user if not exists
-                if (!users.find(u => u.email === 'isaac.paniagua@itson.edu.mx')) {
-                    users.unshift({
-                        id: 'admin-1',
-                        name: "Isaac Paniagua",
-                        email: "isaac.paniagua@itson.edu.mx",
-                        program: "admin",
-                        role: "admin",
-                        status: "active",
-                        createdAt: new Date().toISOString(),
-                        specialty: "Administración del Sistema",
-                        phone: "+52 644 410 0200"
-                    });
-                }
-                
-                // Save loaded data to local storage
-                saveDataToStorage();
-                
-                console.log(`Loaded from Google Sheets: ${loadedUsers} users, ${loadedActivities} activities`);
-                
-            } catch (error) {
-                console.error('Error loading data from sheets:', error);
-                success = false;
-            }
-            
-            return { success, loadedUsers, loadedActivities };
+      /**
+       * Genera reporte en Google Sheets
+       */
+      async function generateReport(reportData) {
+        try {
+          const result = await callGoogleScript(
+            "generateReport",
+            null,
+            reportData
+          );
+          // Actualizar datos de progreso
+          await fetchData("progress");
+          return result.data;
+        } catch (error) {
+          throw error;
         }
+      }
 
-        // Enhanced save functions with REAL Google Sheets integration
-        async function saveUserToSheets(user) {
-            try {
-                setLoadingState(true);
-                
-                const newUser = {
-                    ...user,
-                    id: `${user.program}-${Date.now()}`,
-                    createdAt: new Date().toISOString()
-                };
-                
-                // Add to local array first
-                users.push(newUser);
-                
-                // Save to persistent storage
-                saveDataToStorage();
-                
-                // Prepare data for Google Sheets
-                const userData = [
-                    newUser.id,
-                    newUser.email,
-                    newUser.role,
-                    newUser.name,
-                    'temp_password', // Temporary password
-                    newUser.createdAt,
-                    newUser.status
-                ];
-                
-                const docenteData = [
-                    newUser.id,
-                    newUser.name,
-                    newUser.email,
-                    newUser.specialty || '',
-                    newUser.phone || '',
-                    newUser.status,
-                    newUser.createdAt,
-                    newUser.notes || ''
-                ];
-                
-                // Try to append to Google Sheets
-                if (sheetsConnected) {
-                    try {
-                        await appendToGoogleSheet(newUser.program, 'Usuarios', userData);
-                        await appendToGoogleSheet(newUser.program, 'Docentes', docenteData);
-                    } catch (error) {
-                        console.error('Error saving to sheets:', error);
-                        showNotification('Usuario guardado localmente. Sincronización manual requerida.', 'warning');
-                    }
-                } else {
-                    showSheetsInstructions(newUser.program, 'Usuarios', userData);
-                }
-                
-                setLoadingState(false);
-                showNotification('Usuario guardado exitosamente', 'success');
-                
-                return newUser;
-                
-            } catch (error) {
-                setLoadingState(false);
-                showNotification('Error al guardar usuario', 'error');
-                throw error;
-            }
-        }
+      /**
+       * Muestra/oculta indicador de carga
+       */
+      function showLoadingIndicator(show) {
+        const indicator = document.getElementById("loadingIndicator");
+        indicator.style.display = show ? "block" : "none";
+      }
 
-        async function saveActivityToSheets(activity) {
-            try {
-                setLoadingState(true);
-                
-                const newActivity = {
-                    ...activity,
-                    id: `${activity.program}-${Date.now()}`,
-                    createdAt: new Date().toISOString()
-                };
-                
-                // Add to local array first
-                activities.push(newActivity);
-                
-                // Save to persistent storage
-                saveDataToStorage();
-                
-                // Prepare data for Google Sheets
-                const activityData = [
-                    newActivity.id,
-                    newActivity.title,
-                    newActivity.description,
-                    newActivity.deadline,
-                    newActivity.priority,
-                    newActivity.status,
-                    newActivity.assignedTo,
-                    newActivity.createdBy,
-                    newActivity.createdAt,
-                    newActivity.completedAt || '',
-                    newActivity.notes || ''
-                ];
-                
-                // Try to append to Google Sheets
-                if (sheetsConnected) {
-                    try {
-                        await appendToGoogleSheet(newActivity.program, 'Actividades', activityData);
-                    } catch (error) {
-                        console.error('Error saving activity to sheets:', error);
-                        showNotification('Actividad guardada localmente. Sincronización manual requerida.', 'warning');
-                    }
-                } else {
-                    showSheetsInstructions(newActivity.program, 'Actividades', activityData);
-                }
-                
-                setLoadingState(false);
-                showNotification('Actividad guardada exitosamente', 'success');
-                
-                return newActivity;
-                
-            } catch (error) {
-                setLoadingState(false);
-                showNotification('Error al guardar actividad', 'error');
-                throw error;
-            }
-        }
+      // Funciones de utilidad
+      function showNotification(message, type = "info") {
+        const notification = document.createElement("div");
+        notification.className = `notification-enter bg-white border-l-4 ${
+          type === "success"
+            ? "border-green-500"
+            : type === "error"
+            ? "border-red-500"
+            : type === "warning"
+            ? "border-yellow-500"
+            : "border-blue-500"
+        } p-4 rounded-lg shadow-lg mb-2`;
 
-        async function updateActivityStatus(activityId, newStatus) {
-            try {
-                setLoadingState(true);
-                
-                const activity = activities.find(a => a.id === activityId);
-                if (activity) {
-                    activity.status = newStatus;
-                    activity.updatedAt = new Date().toISOString();
-                    if (newStatus === 'completed') {
-                        activity.completedAt = new Date().toISOString();
-                    }
-                }
-                
-                // Save to persistent storage
-                saveDataToStorage();
-                
-                // Note: For updates, we would need to implement a more complex Google Sheets update mechanism
-                // For now, we'll just save locally and notify about manual sync
-                if (sheetsConnected) {
-                    showNotification('Estado actualizado localmente. Considera sincronizar con Google Sheets.', 'info');
-                } else {
-                    showNotification('Estado actualizado permanentemente', 'success');
-                }
-                
-                setLoadingState(false);
-                
-            } catch (error) {
-                setLoadingState(false);
-                showNotification('Error al actualizar estado', 'error');
-                throw error;
-            }
-        }
-
-        // Sync function
-        async function syncWithSheets() {
-            try {
-                setLoadingState(true);
-                updateSyncStatus('Sincronizando...', 'loading');
-                
-                // Reload data from Google Sheets
-                const result = await loadDataFromSheets();
-                
-                if (result.success) {
-                    sheetsConnected = true;
-                    updateSyncStatus('Sincronización completada', 'success');
-                    showNotification(`Sincronizado: ${result.loadedUsers} usuarios, ${result.loadedActivities} actividades`, 'success');
-                    
-                    // Refresh UI
-                    loadUsers();
-                    loadActivities();
-                    updateStats();
-                    updateSheetsStatus();
-                } else {
-                    updateSyncStatus('Error en sincronización', 'error');
-                    showNotification('Error al sincronizar con Google Sheets', 'error');
-                }
-                
-                setLoadingState(false);
-                
-            } catch (error) {
-                setLoadingState(false);
-                updateSyncStatus('Error de conexión', 'error');
-                showNotification('Error de conexión con Google Sheets', 'error');
-                console.error('Sync error:', error);
-            }
-        }
-
-        function updateSyncStatus(message, type) {
-            const statusElement = document.getElementById('syncStatus');
-            const iconElement = document.getElementById('syncIcon');
-            
-            if (statusElement) {
-                statusElement.textContent = message;
-            }
-            
-            if (iconElement) {
-                iconElement.className = 'fas text-blue-600 ' + 
-                    (type === 'loading' ? 'fa-sync-alt fa-spin' :
-                     type === 'success' ? 'fa-check-circle' :
-                     type === 'error' ? 'fa-exclamation-triangle' :
-                     'fa-sync-alt');
-            }
-        }
-
-        function updateSheetsStatus() {
-            const statusContainer = document.getElementById('sheetsStatus');
-            if (!statusContainer) return;
-            
-            const softwareStatus = sheetsConnected ? 'Conectado' : 'Desconectado';
-            const mechatronicsStatus = sheetsConnected ? 'Conectado' : 'Desconectado';
-            const statusColor = sheetsConnected ? 'green' : 'red';
-            
-            statusContainer.innerHTML = `
-                <div class="p-3 bg-${statusColor}-50 border border-${statusColor}-200 rounded">
-                    <p class="text-sm text-${statusColor}-800">
-                        <i class="fas fa-${sheetsConnected ? 'check-circle' : 'times-circle'} mr-1"></i>
-                        <strong>Ing. Software:</strong> ${softwareStatus}
-                    </p>
-                    <p class="text-xs text-${statusColor}-600 mt-1">
-                        ID: ${GOOGLE_SHEETS_CONFIG.software.id}
-                    </p>
-                </div>
-                <div class="p-3 bg-${statusColor}-50 border border-${statusColor}-200 rounded">
-                    <p class="text-sm text-${statusColor}-800">
-                        <i class="fas fa-${sheetsConnected ? 'check-circle' : 'times-circle'} mr-1"></i>
-                        <strong>Ing. Mecatrónica:</strong> ${mechatronicsStatus}
-                    </p>
-                    <p class="text-xs text-${statusColor}-600 mt-1">
-                        ID: ${GOOGLE_SHEETS_CONFIG.mechatronics.id}
-                    </p>
-                </div>
-            `;
-        }
-
-        // Storage functions
-        function loadDataFromStorage() {
-            try {
-                const storedUsers = localStorage.getItem(STORAGE_KEYS.USERS);
-                if (storedUsers) {
-                    users = JSON.parse(storedUsers);
-                }
-                
-                const storedActivities = localStorage.getItem(STORAGE_KEYS.ACTIVITIES);
-                if (storedActivities) {
-                    activities = JSON.parse(storedActivities);
-                }
-                
-                const storedCurrentUser = localStorage.getItem(STORAGE_KEYS.CURRENT_USER);
-                if (storedCurrentUser) {
-                    currentUser = JSON.parse(storedCurrentUser);
-                }
-                
-                console.log('Datos cargados desde almacenamiento local:', {
-                    users: users.length,
-                    activities: activities.length,
-                    currentUser: currentUser?.name
-                });
-                
-            } catch (error) {
-                console.error('Error loading data from storage:', error);
-                users = [];
-                activities = [];
-                currentUser = null;
-            }
-        }
-
-        function saveDataToStorage() {
-            try {
-                localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
-                localStorage.setItem(STORAGE_KEYS.ACTIVITIES, JSON.stringify(activities));
-                localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(currentUser));
-                localStorage.setItem(STORAGE_KEYS.LAST_SYNC, new Date().toISOString());
-                
-                console.log('Datos guardados en almacenamiento local');
-                
-            } catch (error) {
-                console.error('Error saving data to storage:', error);
-                showNotification('Error al guardar datos localmente', 'error');
-            }
-        }
-
-        function createInitialData() {
-            const adminUser = {
-                id: 'admin-1',
-                name: "Isaac Paniagua",
-                email: "isaac.paniagua@itson.edu.mx",
-                program: "admin",
-                role: "admin",
-                status: "active",
-                createdAt: new Date().toISOString(),
-                specialty: "Administración del Sistema",
-                phone: "+52 644 410 0200"
-            };
-            
-            users.push(adminUser);
-            
-            // Create sample users for demonstration
-            const sampleUsers = [
-                {
-                    id: 'software-1',
-                    name: "Dr. María González",
-                    email: "maria.gonzalez@itson.edu.mx",
-                    program: "software",
-                    role: "docente",
-                    status: "active",
-                    specialty: "Desarrollo Web",
-                    phone: "+52 644 123 4567",
-                    createdAt: new Date().toISOString()
-                },
-                {
-                    id: 'mechatronics-1',
-                    name: "Dr. Ana Martínez",
-                    email: "ana.martinez@itson.edu.mx",
-                    program: "mechatronics",
-                    role: "docente",
-                    status: "active",
-                    specialty: "Robótica Industrial",
-                    phone: "+52 644 345 6789",
-                    createdAt: new Date().toISOString()
-                }
-            ];
-            
-            users.push(...sampleUsers);
-            
-            // Create sample activities
-            const sampleActivities = [
-                {
-                    id: 'activity-1',
-                    title: "Actualización de Plan de Estudios",
-                    description: "Revisar y actualizar el plan de estudios de Ingeniería en Software",
-                    program: "software",
-                    assignedTo: "software-1",
-                    priority: "alta",
-                    status: "in-progress",
-                    deadline: "2024-02-15",
-                    createdBy: "admin-1",
-                    createdAt: new Date().toISOString(),
-                    notes: "Incluir nuevas tecnologías emergentes"
-                },
-                {
-                    id: 'activity-2',
-                    title: "Preparación de Laboratorio",
-                    description: "Configurar equipos para prácticas de robótica",
-                    program: "mechatronics",
-                    assignedTo: "mechatronics-1",
-                    priority: "media",
-                    status: "pending",
-                    deadline: "2024-02-20",
-                    createdBy: "admin-1",
-                    createdAt: new Date().toISOString()
-                }
-            ];
-            
-            activities.push(...sampleActivities);
-        }
-
-        // Utility functions
-        function setLoadingState(loading) {
-            isLoading = loading;
-            const loadingElements = document.querySelectorAll('.loading-indicator');
-            loadingElements.forEach(el => {
-                el.style.display = loading ? 'flex' : 'none';
-            });
-            
-            const buttons = document.querySelectorAll('button');
-            buttons.forEach(btn => {
-                btn.disabled = loading;
-                if (loading) {
-                    btn.classList.add('opacity-50', 'cursor-not-allowed');
-                } else {
-                    btn.classList.remove('opacity-50', 'cursor-not-allowed');
-                }
-            });
-        }
-
-        function showNotification(message, type = 'info') {
-            const notification = document.createElement('div');
-            notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg max-w-sm ${
-                type === 'success' ? 'bg-green-500 text-white' :
-                type === 'error' ? 'bg-red-500 text-white' :
-                type === 'warning' ? 'bg-yellow-500 text-white' :
-                'bg-blue-500 text-white'
-            }`;
-            
-            notification.innerHTML = `
-                <div class="flex items-center justify-between">
-                    <span>${message}</span>
-                    <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white hover:text-gray-200">
+        notification.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas ${
+                      type === "success"
+                        ? "fa-check-circle text-green-500"
+                        : type === "error"
+                        ? "fa-exclamation-circle text-red-500"
+                        : type === "warning"
+                        ? "fa-exclamation-triangle text-yellow-500"
+                        : "fa-info-circle text-blue-500"
+                    } mr-3"></i>
+                    <span class="text-gray-800">${message}</span>
+                    <button onclick="this.parentElement.parentElement.remove()" class="ml-auto text-gray-500 hover:text-gray-700">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
             `;
-            
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                if (notification.parentElement) {
-                    notification.remove();
-                }
-            }, 5000);
-        }
 
-        // Authentication with persistent session
-        document.getElementById('loginForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPassword').value;
-            
-            try {
-                setLoadingState(true);
-                
-                // Initialize system with Google Sheets integration
-                await initializeGoogleSheets();
-                
-                // Find user in loaded data
-                const user = users.find(u => u.email === email);
-                
-                if (user) {
-                    const isValidLogin = (user.email === 'isaac.paniagua@itson.edu.mx' && password === 'admin123') ||
-                                        (user.email !== 'isaac.paniagua@itson.edu.mx' && password.length > 0);
-                    
-                    if (isValidLogin) {
-                        currentUser = user;
-                        saveDataToStorage();
-                        showDashboard();
-                        showNotification('Sesión iniciada exitosamente', 'success');
-                    } else {
-                        showNotification('Contraseña incorrecta', 'error');
-                    }
-                } else {
-                    showNotification('Usuario no encontrado', 'error');
-                }
-                
-                setLoadingState(false);
-                
-            } catch (error) {
-                setLoadingState(false);
-                showNotification('Error al conectar con el sistema', 'error');
-                console.error('Login error:', error);
-            }
+        document.getElementById("notifications").appendChild(notification);
+
+        setTimeout(() => {
+          if (notification.parentElement) {
+            notification.remove();
+          }
+        }, 5000);
+      }
+
+      function hasPermission(action) {
+        if (!currentUser) return false;
+
+        const permissions = {
+          administrador: [
+            "manage_users",
+            "manage_activities",
+            "manage_teachers",
+            "view_reports",
+            "generate_reports",
+            "manage_profile",
+            "switch_career",
+          ],
+          profesor: [
+            "manage_activities",
+            "manage_teachers",
+            "view_reports",
+            "generate_reports",
+            "manage_profile",
+          ],
+          docente: ["view_own_activities", "manage_profile", "reset_password"],
+        };
+
+        return permissions[currentUser.rol]?.includes(action) || false;
+      }
+
+      function getCurrentData() {
+        return cachedData[currentCareer];
+      }
+
+      function updateCareerUI() {
+        const careerNames = {
+          software: "Ingeniería en Software",
+          mecatronica: "Ingeniería en Mecatrónica y Manufactura",
+        };
+
+        const careerColors = {
+          software: "gradient-software",
+          mecatronica: "gradient-mecatronica",
+        };
+
+        const careerIcons = {
+          software: "fa-code",
+          mecatronica: "fa-cogs",
+        };
+
+        // Actualizar header
+        document.getElementById("headerCareerName").textContent =
+          careerNames[currentCareer];
+        const headerIcon = document.getElementById("headerCareerIcon");
+        headerIcon.className = `w-10 h-10 ${
+          currentCareer === "software" ? "bg-indigo-600" : "bg-emerald-600"
+        } rounded-full flex items-center justify-center`;
+        headerIcon.innerHTML = `<i class="fas ${careerIcons[currentCareer]} text-white"></i>`;
+
+        // Actualizar badge en overview
+        const currentCareerBadge =
+          document.getElementById("currentCareerBadge");
+        currentCareerBadge.innerHTML = `
+                <span class="px-3 py-1 text-sm font-medium rounded-full ${
+                  currentCareer === "software"
+                    ? "career-badge-software"
+                    : "career-badge-mecatronica"
+                }">
+                    <i class="fas ${careerIcons[currentCareer]} mr-2"></i>${
+          careerNames[currentCareer]
+        }
+                </span>
+            `;
+
+        // Actualizar selector de carrera
+        document.getElementById("switchCareer").value = currentCareer;
+      }
+
+      function generateMenu() {
+        const menu = document.getElementById("sidebarMenu");
+        menu.innerHTML = "";
+
+        const menuItems = [
+          {
+            id: "overview",
+            icon: "fa-tachometer-alt",
+            text: "Panel Principal",
+            permission: true,
+          },
+          {
+            id: "users",
+            icon: "fa-users",
+            text: "Gestión de Usuarios",
+            permission: hasPermission("manage_users"),
+          },
+          {
+            id: "activities",
+            icon: "fa-tasks",
+            text: "Actividades",
+            permission:
+              hasPermission("manage_activities") ||
+              hasPermission("view_own_activities"),
+          },
+          {
+            id: "teachers",
+            icon: "fa-chalkboard-teacher",
+            text: "Gestión de Docentes",
+            permission: hasPermission("manage_teachers"),
+          },
+          {
+            id: "reports",
+            icon: "fa-chart-bar",
+            text: "Reportes",
+            permission: hasPermission("view_reports"),
+          },
+          {
+            id: "profile",
+            icon: "fa-user",
+            text: "Mi Perfil",
+            permission: hasPermission("manage_profile"),
+          },
+        ];
+
+        menuItems.forEach((item) => {
+          if (item.permission) {
+            const li = document.createElement("li");
+            li.innerHTML = `
+                        <button onclick="showSection('${item.id}')" class="w-full flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg transition duration-200">
+                            <i class="fas ${item.icon}"></i>
+                            <span>${item.text}</span>
+                        </button>
+                    `;
+            menu.appendChild(li);
+          }
+        });
+      }
+
+      function showSection(sectionId) {
+        // Ocultar todas las secciones
+        const sections = [
+          "overviewSection",
+          "usersSection",
+          "activitiesSection",
+          "teachersSection",
+          "reportsSection",
+          "profileSection",
+        ];
+        sections.forEach((id) => {
+          document.getElementById(id).classList.add("hidden");
         });
 
-        // Check for existing session on page load
-        function checkExistingSession() {
-            const storedUser = localStorage.getItem(STORAGE_KEYS.CURRENT_USER);
-            if (storedUser) {
-                try {
-                    currentUser = JSON.parse(storedUser);
-                    if (currentUser && currentUser.id) {
-                        initializeGoogleSheets().then(() => {
-                            showDashboard();
-                            showNotification(`Bienvenido de nuevo, ${currentUser.name}`, 'success');
-                        });
-                        return true;
-                    }
-                } catch (error) {
-                    console.error('Error loading session:', error);
-                    localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
-                }
-            }
-            return false;
-        }
+        // Mostrar la sección seleccionada
+        document
+          .getElementById(sectionId + "Section")
+          .classList.remove("hidden");
 
-        function showDashboard() {
-            document.getElementById('loginScreen').classList.add('hidden');
-            document.getElementById('dashboard').classList.remove('hidden');
-            updateUserInfo();
+        // Cargar contenido específico
+        switch (sectionId) {
+          case "overview":
+            loadOverview();
+            break;
+          case "users":
             loadUsers();
+            break;
+          case "activities":
             loadActivities();
-            updateStats();
-            updateSheetsStatus();
+            break;
+          case "teachers":
+            loadTeachers();
+            break;
+          case "reports":
+            loadReports();
+            break;
+          case "profile":
+            loadProfile();
+            break;
+        }
+      }
+
+      async function loadOverview() {
+        try {
+          // Cargar todos los datos necesarios
+          const [users, activities, teachers] = await Promise.all([
+            fetchData("users"),
+            fetchData("activities"),
+            fetchData("teachers"),
+          ]);
+
+          // Cargar estadísticas
+          const statsCards = document.getElementById("statsCards");
+          const stats = [
+            {
+              title: "Total Usuarios",
+              value: users.length,
+              icon: "fa-users",
+              color: "bg-blue-500",
+            },
+            {
+              title: "Actividades Activas",
+              value: activities.filter(
+                (a) => a.estado === "pendiente" || a.estado === "en_progreso"
+              ).length,
+              icon: "fa-tasks",
+              color: "bg-green-500",
+            },
+            {
+              title: "Docentes Registrados",
+              value: teachers.length,
+              icon: "fa-chalkboard-teacher",
+              color: "bg-purple-500",
+            },
+            {
+              title: "Completadas",
+              value: activities.filter((a) => a.estado === "completada").length,
+              icon: "fa-check-circle",
+              color: "bg-orange-500",
+            },
+          ];
+
+          statsCards.innerHTML = stats
+            .map(
+              (stat) => `
+                    <div class="bg-white rounded-xl card-shadow p-6">
+                        <div class="flex items-center">
+                            <div class="w-12 h-12 ${stat.color} rounded-lg flex items-center justify-center">
+                                <i class="fas ${stat.icon} text-white text-xl"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600">${stat.title}</p>
+                                <p class="text-2xl font-bold text-gray-900">${stat.value}</p>
+                            </div>
+                        </div>
+                    </div>
+                `
+            )
+            .join("");
+
+          // Cargar actividad reciente
+          const recentActivity = document.getElementById("recentActivity");
+          const recentActivities = activities.slice(-5).reverse();
+
+          recentActivity.innerHTML = recentActivities
+            .map((activity) => {
+              const user = users.find((u) => u.id === activity.asignadoA);
+              return `
+                        <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                            <div class="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-tasks text-indigo-600 text-sm"></i>
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-sm font-medium text-gray-800">${
+                                  activity.titulo
+                                }</p>
+                                <p class="text-xs text-gray-600">Asignado a: ${
+                                  user?.nombre || "Usuario desconocido"
+                                }</p>
+                            </div>
+                            <span class="text-xs px-2 py-1 rounded-full ${
+                              activity.estado === "completada"
+                                ? "bg-green-100 text-green-800"
+                                : activity.estado === "en_progreso"
+                                ? "bg-blue-100 text-blue-800"
+                                : "bg-yellow-100 text-yellow-800"
+                            }">${activity.estado.replace("_", " ")}</span>
+                        </div>
+                    `;
+            })
+            .join("");
+        } catch (error) {
+          showNotification("Error al cargar el panel principal", "error");
+        }
+      }
+
+      async function loadUsers() {
+        if (!hasPermission("manage_users")) {
+          showNotification("No tienes permisos para ver esta sección", "error");
+          return;
         }
 
-        function logout() {
-            currentUser = null;
-            localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
-            
-            document.getElementById('dashboard').classList.add('hidden');
-            document.getElementById('loginScreen').classList.remove('hidden');
-            document.getElementById('loginForm').reset();
-            
-            showNotification('Sesión cerrada. Los datos se mantienen guardados.', 'info');
-        }
+        try {
+          const users = await fetchData("users");
+          const usersTable = document.getElementById("usersTable");
+          let filteredUsers = users;
 
-        function updateUserInfo() {
-            if (currentUser) {
-                document.getElementById('currentUserName').textContent = currentUser.name;
-                document.getElementById('currentUserRole').textContent = 
-                    currentUser.role === 'admin' ? 'Administrador' : 
-                    currentUser.role === 'auxiliar' ? 'Profesor Auxiliar' : 'Docente';
-                document.getElementById('userWelcome').textContent = `Bienvenido, ${currentUser.name}`;
-            }
-        }
+          // Si es profesor auxiliar, solo puede ver docentes y otros profesores
+          if (currentUser.rol === "profesor") {
+            filteredUsers = users.filter(
+              (u) => u.rol === "docente" || u.rol === "profesor"
+            );
+          }
 
-        // Tab navigation
-        function showTab(tabName) {
-            document.querySelectorAll('.tab-content').forEach(content => {
-                content.classList.add('hidden');
-            });
-            
-            document.querySelectorAll('[id^="tab-"]').forEach(tab => {
-                tab.classList.remove('border-blue-500', 'text-blue-600');
-                tab.classList.add('border-transparent', 'text-gray-500');
-            });
-            
-            document.getElementById(`content-${tabName}`).classList.remove('hidden');
-            
-            const activeTab = document.getElementById(`tab-${tabName}`);
-            activeTab.classList.add('border-blue-500', 'text-blue-600');
-            activeTab.classList.remove('border-transparent', 'text-gray-500');
-        }
-
-        // Users management
-        function loadUsers() {
-            const tbody = document.getElementById('usersTable');
-            tbody.innerHTML = '';
-            
-            const filteredUsers = users.filter(user => user.program !== 'admin');
-            
-            if (filteredUsers.length === 0) {
-                tbody.innerHTML = `
+          usersTable.innerHTML = filteredUsers
+            .map(
+              (user) => `
                     <tr>
-                        <td colspan="5" class="py-8 text-center text-gray-500">
-                            <i class="fas fa-users text-3xl mb-2 block"></i>
-                            <p>No hay usuarios registrados</p>
-                            <p class="text-sm">Agrega usuarios o sincroniza con Google Sheets</p>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${
+                          user.id
+                        }</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <img class="h-10 w-10 rounded-full" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Ccircle cx='20' cy='20' r='20' fill='%23e5e7eb'/%3E%3Cpath d='M20 20c3.3 0 6-2.7 6-6s-2.7-6-6-6-6 2.7-6 6 2.7 6 6 6zm0 2c-4 0-12 2-12 6v2h24v-2c0-4-8-6-12-6z' fill='%236b7280'/%3E%3C/svg%3E" alt="">
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900">${
+                                      user.nombre
+                                    }</div>
+                                </div>
+                            </div>
                         </td>
-                    </tr>
-                `;
-                return;
-            }
-            
-            filteredUsers.forEach(user => {
-                const row = document.createElement('tr');
-                row.className = 'border-t border-gray-100 hover:bg-gray-50';
-                row.innerHTML = `
-                    <td class="py-3">
-                        <div class="flex items-center space-x-3">
-                            <div class="bg-gray-100 w-8 h-8 rounded-full flex items-center justify-center">
-                                <i class="fas fa-user text-gray-600 text-sm"></i>
-                            </div>
-                            <div>
-                                <p class="font-medium text-gray-800">${user.name || 'Sin nombre'}</p>
-                                <p class="text-xs text-gray-500">${user.email}</p>
-                                ${user.specialty ? `<p class="text-xs text-blue-600">${user.specialty}</p>` : ''}
-                                ${user.phone ? `<p class="text-xs text-gray-400"><i class="fas fa-phone mr-1"></i>${user.phone}</p>` : ''}
-                            </div>
-                        </div>
-                    </td>
-                    <td class="py-3">
-                        <span class="px-2 py-1 rounded-full text-xs font-medium ${
-                            user.program === 'software' ? 'bg-purple-100 text-purple-800' : 'bg-orange-100 text-orange-800'
-                        }">
-                            ${user.program === 'software' ? 'Ing. Software' : 'Ing. Mecatrónica'}
-                        </span>
-                    </td>
-                    <td class="py-3">
-                        <span class="text-sm text-gray-600">
-                            ${user.role === 'docente' ? 'Docente' : 
-                              user.role === 'auxiliar' ? 'Profesor Auxiliar' : 
-                              user.role === 'admin' ? 'Administrador' : user.role}
-                        </span>
-                    </td>
-                    <td class="py-3">
-                        <span class="px-2 py-1 rounded-full text-xs font-medium ${
-                            user.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                        }">
-                            ${user.status === 'active' ? 'Activo' : 'Inactivo'}
-                        </span>
-                    </td>
-                    <td class="py-3">
-                        <button onclick="editUser('${user.id}')" class="text-blue-600 hover:text-blue-800 mr-2 p-1">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button onclick="deleteUser('${user.id}')" class="text-red-600 hover:text-red-800 p-1">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </td>
-                `;
-                tbody.appendChild(row);
-            });
-        }
-
-        function filterUsers(program) {
-            document.querySelectorAll('[id^="filter-"]').forEach(btn => {
-                btn.classList.remove('bg-blue-100', 'text-blue-700');
-                btn.classList.add('text-gray-600', 'hover:bg-gray-100');
-            });
-            
-            document.getElementById(`filter-${program}`).classList.add('bg-blue-100', 'text-blue-700');
-            document.getElementById(`filter-${program}`).classList.remove('text-gray-600', 'hover:bg-gray-100');
-            
-            loadUsers();
-        }
-
-        // Modal functions
-        function showAddUserModal() {
-            document.getElementById('addUserModal').classList.remove('hidden');
-        }
-
-        function closeAddUserModal() {
-            document.getElementById('addUserModal').classList.add('hidden');
-            document.getElementById('addUserForm').reset();
-        }
-
-        function showAddActivityModal() {
-            const teacherSelect = document.getElementById('newActivityTeacher');
-            teacherSelect.innerHTML = '<option value="">Seleccionar docente</option>';
-            
-            users.forEach(user => {
-                if (user.role === 'docente' || user.role === 'auxiliar') {
-                    teacherSelect.innerHTML += `<option value="${user.id}">${user.name}</option>`;
-                }
-            });
-            
-            document.getElementById('addActivityModal').classList.remove('hidden');
-        }
-
-        function closeAddActivityModal() {
-            document.getElementById('addActivityModal').classList.add('hidden');
-            document.getElementById('addActivityForm').reset();
-        }
-
-        // Form submissions
-        document.getElementById('addUserForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const newUser = {
-                name: document.getElementById('newUserName').value,
-                email: document.getElementById('newUserEmail').value,
-                program: document.getElementById('newUserProgram').value,
-                role: document.getElementById('newUserRole').value,
-                specialty: document.getElementById('newUserSpecialty').value,
-                phone: document.getElementById('newUserPhone').value,
-                status: 'active'
-            };
-            
-            try {
-                await saveUserToSheets(newUser);
-                loadUsers();
-                updateStats();
-                closeAddUserModal();
-            } catch (error) {
-                console.error('Error adding user:', error);
-            }
-        });
-
-        document.getElementById('addActivityForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const newActivity = {
-                title: document.getElementById('newActivityTitle').value,
-                description: document.getElementById('newActivityDescription').value,
-                program: document.getElementById('newActivityProgram').value,
-                assignedTo: document.getElementById('newActivityTeacher').value,
-                priority: document.getElementById('newActivityPriority').value,
-                status: 'pending',
-                deadline: document.getElementById('newActivityDeadline').value,
-                createdBy: currentUser ? currentUser.id : 'admin-1'
-            };
-            
-            try {
-                await saveActivityToSheets(newActivity);
-                loadActivities();
-                updateStats();
-                closeAddActivityModal();
-            } catch (error) {
-                console.error('Error adding activity:', error);
-            }
-        });
-
-        // Activities management
-        function loadActivities() {
-            const container = document.getElementById('activitiesList');
-            container.innerHTML = '';
-            
-            if (activities.length === 0) {
-                container.innerHTML = `
-                    <div class="text-center text-gray-500 py-8">
-                        <i class="fas fa-tasks text-3xl mb-2"></i>
-                        <p>No hay actividades registradas</p>
-                        <p class="text-sm">Agrega actividades o sincroniza con Google Sheets</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            activities.forEach(activity => {
-                const assignedUser = users.find(u => u.id === activity.assignedTo || u.email === activity.assignedTo);
-                const createdByUser = users.find(u => u.id === activity.createdBy);
-                
-                const statusColor = activity.status === 'completed' ? 'green' : 
-                                  activity.status === 'in-progress' ? 'yellow' : 'red';
-                const statusText = activity.status === 'completed' ? 'Completada' : 
-                                 activity.status === 'in-progress' ? 'En Progreso' : 'Pendiente';
-                
-                const priorityColor = activity.priority === 'urgente' ? 'red' :
-                                    activity.priority === 'alta' ? 'orange' :
-                                    activity.priority === 'media' ? 'yellow' : 'gray';
-                const priorityText = activity.priority === 'urgente' ? 'Urgente' :
-                                   activity.priority === 'alta' ? 'Alta' :
-                                   activity.priority === 'media' ? 'Media' : 'Baja';
-                
-                const activityCard = document.createElement('div');
-                activityCard.className = 'border border-gray-200 rounded-lg p-4 mb-4 hover:shadow-md transition-shadow';
-                activityCard.innerHTML = `
-                    <div class="flex justify-between items-start mb-3">
-                        <div class="flex-1">
-                            <div class="flex items-center space-x-2 mb-2">
-                                <h4 class="font-semibold text-gray-800">${activity.title}</h4>
-                                <span class="px-2 py-1 rounded-full text-xs font-medium bg-${priorityColor}-100 text-${priorityColor}-800">
-                                    ${priorityText}
-                                </span>
-                            </div>
-                            <p class="text-sm text-gray-600 mb-2">${activity.description}</p>
-                            ${activity.notes ? `<p class="text-xs text-gray-500 italic">Notas: ${activity.notes}</p>` : ''}
-                        </div>
-                        <span class="px-2 py-1 rounded-full text-xs font-medium bg-${statusColor}-100 text-${statusColor}-800 ml-4">
-                            ${statusText}
-                        </span>
-                    </div>
-                    <div class="flex justify-between items-center text-sm text-gray-500">
-                        <div class="flex items-center space-x-4 flex-wrap">
-                            <span><i class="fas fa-user mr-1"></i>${assignedUser ? assignedUser.name : 'Sin asignar'}</span>
-                            <span><i class="fas fa-calendar mr-1"></i>${activity.deadline || 'Sin fecha'}</span>
-                            <span class="px-2 py-1 rounded-full text-xs ${
-                                activity.program === 'software' ? 'bg-purple-100 text-purple-800' : 'bg-orange-100 text-orange-800'
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${
+                          user.email
+                        }</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                              user.rol === "administrador"
+                                ? "bg-red-100 text-red-800"
+                                : user.rol === "profesor"
+                                ? "bg-blue-100 text-blue-800"
+                                : "bg-green-100 text-green-800"
                             }">
-                                ${activity.program === 'software' ? 'Ing. Software' : 'Ing. Mecatrónica'}
+                                ${
+                                  user.rol.charAt(0).toUpperCase() +
+                                  user.rol.slice(1)
+                                }
                             </span>
-                            ${createdByUser ? `<span class="text-xs"><i class="fas fa-user-plus mr-1"></i>Por: ${createdByUser.name}</span>` : ''}
-                        </div>
-                        <div class="flex space-x-2">
-                            ${activity.status !== 'completed' ? `
-                                <button onclick="markAsCompleted('${activity.id}')" 
-                                        class="text-green-600 hover:text-green-800 p-1">
-                                    <i class="fas fa-check"></i>
-                                </button>
-                            ` : ''}
-                            <button onclick="editActivity('${activity.id}')" 
-                                    class="text-blue-600 hover:text-blue-800 p-1">
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                              user.estado === "activo"
+                                ? "bg-green-100 text-green-800"
+                                : "bg-red-100 text-red-800"
+                            }">
+                                ${user.estado}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${
+                          user.fechaRegistro
+                        }</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <button onclick="editUser(${
+                              user.id
+                            })" class="text-indigo-600 hover:text-indigo-900 mr-3">
                                 <i class="fas fa-edit"></i>
                             </button>
-                            <button onclick="deleteActivity('${activity.id}')" 
-                                    class="text-red-600 hover:text-red-800 p-1">
+                            ${
+                              user.id !== currentUser.id
+                                ? `
+                                <button onclick="deleteUser(${user.id})" class="text-red-600 hover:text-red-900">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            `
+                                : ""
+                            }
+                        </td>
+                    </tr>
+                `
+            )
+            .join("");
+        } catch (error) {
+          showNotification("Error al cargar usuarios", "error");
+        }
+      }
+
+      async function loadActivities() {
+        try {
+          const [activities, users] = await Promise.all([
+            fetchData(
+              "activities",
+              currentUser.rol === "docente" ? currentUser.id : null
+            ),
+            fetchData("users"),
+          ]);
+
+          const activitiesGrid = document.getElementById("activitiesGrid");
+
+          activitiesGrid.innerHTML = activities
+            .map((activity) => {
+              const user = users.find((u) => u.id === activity.asignadoA);
+              const creator = users.find((u) => u.id === activity.creadoPor);
+              return `
+                        <div class="bg-white rounded-xl card-shadow p-6">
+                            <div class="flex justify-between items-start mb-4">
+                                <h3 class="text-lg font-semibold text-gray-800">${
+                                  activity.titulo
+                                }</h3>
+                                <span class="px-2 py-1 text-xs rounded-full ${
+                                  activity.prioridad === "alta"
+                                    ? "bg-red-100 text-red-800"
+                                    : activity.prioridad === "media"
+                                    ? "bg-yellow-100 text-yellow-800"
+                                    : "bg-green-100 text-green-800"
+                                }">${activity.prioridad}</span>
+                            </div>
+                            
+                            <p class="text-gray-600 mb-4">${
+                              activity.descripcion
+                            }</p>
+                            
+                            <div class="space-y-2 mb-4">
+                                <div class="flex items-center text-sm text-gray-600">
+                                    <i class="fas fa-calendar mr-2"></i>
+                                    Límite: ${activity.fechaLimite}
+                                </div>
+                                <div class="flex items-center text-sm text-gray-600">
+                                    <i class="fas fa-user mr-2"></i>
+                                    Asignado: ${
+                                      user?.nombre || "Usuario desconocido"
+                                    }
+                                </div>
+                                <div class="flex items-center text-sm text-gray-600">
+                                    <i class="fas fa-user-plus mr-2"></i>
+                                    Creado por: ${
+                                      creator?.nombre || "Usuario desconocido"
+                                    }
+                                </div>
+                                ${
+                                  activity.notas
+                                    ? `
+                                    <div class="flex items-start text-sm text-gray-600">
+                                        <i class="fas fa-sticky-note mr-2 mt-1"></i>
+                                        <span>${activity.notas}</span>
+                                    </div>
+                                `
+                                    : ""
+                                }
+                            </div>
+                            
+                            <div class="flex justify-between items-center">
+                                <span class="px-3 py-1 text-sm rounded-full ${
+                                  activity.estado === "completada"
+                                    ? "bg-green-100 text-green-800"
+                                    : activity.estado === "en_progreso"
+                                    ? "bg-blue-100 text-blue-800"
+                                    : "bg-yellow-100 text-yellow-800"
+                                }">${activity.estado.replace("_", " ")}</span>
+                                
+                                ${
+                                  hasPermission("manage_activities")
+                                    ? `
+                                    <div class="space-x-2">
+                                        <button onclick="editActivity(${activity.id})" class="text-indigo-600 hover:text-indigo-800">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button onclick="deleteActivity(${activity.id})" class="text-red-600 hover:text-red-800">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                `
+                                    : ""
+                                }
+                            </div>
+                        </div>
+                    `;
+            })
+            .join("");
+        } catch (error) {
+          showNotification("Error al cargar actividades", "error");
+        }
+      }
+
+      async function loadTeachers() {
+        if (!hasPermission("manage_teachers")) {
+          showNotification("No tienes permisos para ver esta sección", "error");
+          return;
+        }
+
+        try {
+          const teachers = await fetchData("teachers");
+          const teachersTable = document.getElementById("teachersTable");
+
+          teachersTable.innerHTML = teachers
+            .map(
+              (teacher) => `
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${
+                          teacher.id
+                        }</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <img class="h-10 w-10 rounded-full" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Ccircle cx='20' cy='20' r='20' fill='%23e5e7eb'/%3E%3Cpath d='M20 20c3.3 0 6-2.7 6-6s-2.7-6-6-6-6 2.7-6 6 2.7 6 6 6zm0 2c-4 0-12 2-12 6v2h24v-2c0-4-8-6-12-6z' fill='%236b7280'/%3E%3C/svg%3E" alt="">
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900">${
+                                      teacher.nombre
+                                    }</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${
+                          teacher.email
+                        }</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${
+                          teacher.especialidad
+                        }</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${
+                          teacher.telefono
+                        }</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                              teacher.estado === "activo"
+                                ? "bg-green-100 text-green-800"
+                                : teacher.estado === "licencia"
+                                ? "bg-yellow-100 text-yellow-800"
+                                : "bg-red-100 text-red-800"
+                            }">
+                                ${teacher.estado}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <button onclick="editTeacher(${
+                              teacher.id
+                            })" class="text-indigo-600 hover:text-indigo-900 mr-3">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="deleteTeacher(${
+                              teacher.id
+                            })" class="text-red-600 hover:text-red-900">
                                 <i class="fas fa-trash"></i>
                             </button>
-                        </div>
-                    </div>
-                `;
-                container.appendChild(activityCard);
-            });
+                        </td>
+                    </tr>
+                `
+            )
+            .join("");
+        } catch (error) {
+          showNotification("Error al cargar docentes", "error");
+        }
+      }
+
+      async function loadReports() {
+        if (!hasPermission("view_reports")) {
+          showNotification("No tienes permisos para ver esta sección", "error");
+          return;
         }
 
-        async function markAsCompleted(activityId) {
+        try {
+          const [users, progress] = await Promise.all([
+            fetchData("users"),
+            fetchData("progress"),
+          ]);
+
+          // Cargar usuarios para el selector
+          const userSelect = document.getElementById("userSelect");
+          let availableUsers = users;
+
+          if (currentUser.rol === "profesor") {
+            availableUsers = users.filter(
+              (u) => u.rol === "docente" || u.rol === "profesor"
+            );
+          }
+
+          userSelect.innerHTML =
+            '<option value="">Seleccionar usuario</option>' +
+            availableUsers
+              .map(
+                (user) => `<option value="${user.id}">${user.nombre}</option>`
+              )
+              .join("");
+
+          // Establecer fechas por defecto
+          const today = new Date();
+          const startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+          document.getElementById("startDate").value = startDate
+            .toISOString()
+            .split("T")[0];
+          document.getElementById("endDate").value = today
+            .toISOString()
+            .split("T")[0];
+
+          // Cargar progreso histórico
+          const progressHistoryTable = document.getElementById(
+            "progressHistoryTable"
+          );
+          progressHistoryTable.innerHTML = progress
+            .map((progressItem) => {
+              const generator = users.find(
+                (u) => u.id === progressItem.generadoPor
+              );
+              return `
+                        <tr>
+                            <td class="px-4 py-2 text-sm text-gray-900">${
+                              progressItem.fecha
+                            }</td>
+                            <td class="px-4 py-2 text-sm text-gray-900">${
+                              progressItem.periodoInicio
+                            } - ${progressItem.periodoFin}</td>
+                            <td class="px-4 py-2 text-sm text-gray-900">${
+                              progressItem.totalActividades
+                            }</td>
+                            <td class="px-4 py-2 text-sm text-gray-900">${
+                              progressItem.completadas
+                            }</td>
+                            <td class="px-4 py-2 text-sm text-gray-900">${
+                              progressItem.totalDocentes
+                            }</td>
+                            <td class="px-4 py-2 text-sm text-gray-900">${
+                              generator?.nombre || "Usuario desconocido"
+                            }</td>
+                        </tr>
+                    `;
+            })
+            .join("");
+        } catch (error) {
+          showNotification("Error al cargar reportes", "error");
+        }
+      }
+
+      function loadProfile() {
+        document.getElementById("profileName").textContent = currentUser.nombre;
+        document.getElementById("profileRole").textContent =
+          currentUser.rol.charAt(0).toUpperCase() + currentUser.rol.slice(1);
+        document.getElementById("profileEmail").textContent = currentUser.email;
+
+        // Badge de carrera
+        const careerNames = {
+          software: "Ingeniería en Software",
+          mecatronica: "Ingeniería en Mecatrónica y Manufactura",
+        };
+
+        document.getElementById("profileCareerBadge").innerHTML = `
+                <span class="px-3 py-1 text-sm font-medium rounded-full ${
+                  currentCareer === "software"
+                    ? "career-badge-software"
+                    : "career-badge-mecatronica"
+                }">
+                    ${careerNames[currentCareer]}
+                </span>
+            `;
+
+        document.getElementById("fullName").value = currentUser.nombre;
+        document.getElementById("emailProfile").value = currentUser.email;
+        document.getElementById("phone").value = currentUser.telefono || "";
+        document.getElementById("specialty").value =
+          currentUser.especialidad || "";
+      }
+
+      // Funciones de gestión
+      function addUser() {
+        document.getElementById("userModalTitle").textContent =
+          "Agregar Usuario";
+        document.getElementById("userForm").reset();
+        document.getElementById("userModal").classList.remove("hidden");
+      }
+
+      async function editUser(userId) {
+        try {
+          const users = await fetchData("users");
+          const user = users.find((u) => u.id === userId);
+          if (!user) return;
+
+          document.getElementById("userModalTitle").textContent =
+            "Editar Usuario";
+          document.getElementById("modalUserName").value = user.nombre;
+          document.getElementById("modalUserEmail").value = user.email;
+          document.getElementById("modalUserRole").value = user.rol;
+          document.getElementById("modalUserPassword").value =
+            user.password || "";
+          document.getElementById("modalUserPhone").value = user.telefono || "";
+          document.getElementById("modalUserSpecialty").value =
+            user.especialidad || "";
+
+          document.getElementById("userModal").classList.remove("hidden");
+          document.getElementById("userModal").dataset.editId = userId;
+        } catch (error) {
+          showNotification("Error al cargar usuario", "error");
+        }
+      }
+
+      async function deleteUser(userId) {
+        if (confirm("¿Estás seguro de que deseas eliminar este usuario?")) {
+          try {
+            await deleteRecord("users", userId);
+            loadUsers();
+            showNotification("Usuario eliminado exitosamente", "success");
+          } catch (error) {
+            showNotification("Error al eliminar usuario", "error");
+          }
+        }
+      }
+
+      async function addActivity() {
+        document.getElementById("activityModalTitle").textContent =
+          "Nueva Actividad";
+        document.getElementById("activityForm").reset();
+
+        try {
+          // Cargar usuarios disponibles
+          const users = await fetchData("users");
+          const assigneeSelect = document.getElementById(
+            "modalActivityAssignee"
+          );
+          let availableUsers = users;
+
+          if (currentUser.rol === "profesor") {
+            availableUsers = users.filter(
+              (u) => u.rol === "docente" || u.rol === "profesor"
+            );
+          }
+
+          assigneeSelect.innerHTML =
+            '<option value="">Seleccionar usuario</option>' +
+            availableUsers
+              .map(
+                (user) => `<option value="${user.id}">${user.nombre}</option>`
+              )
+              .join("");
+
+          document.getElementById("activityModal").classList.remove("hidden");
+        } catch (error) {
+          showNotification("Error al cargar usuarios", "error");
+        }
+      }
+
+      async function editActivity(activityId) {
+        try {
+          const [activities, users] = await Promise.all([
+            fetchData("activities"),
+            fetchData("users"),
+          ]);
+
+          const activity = activities.find((a) => a.id === activityId);
+          if (!activity) return;
+
+          document.getElementById("activityModalTitle").textContent =
+            "Editar Actividad";
+          document.getElementById("modalActivityTitle").value = activity.titulo;
+          document.getElementById("modalActivityDescription").value =
+            activity.descripcion;
+          document.getElementById("modalActivityDeadline").value =
+            activity.fechaLimite;
+          document.getElementById("modalActivityPriority").value =
+            activity.prioridad;
+          document.getElementById("modalActivityStatus").value =
+            activity.estado;
+          document.getElementById("modalActivityNotes").value =
+            activity.notas || "";
+
+          // Cargar usuarios disponibles
+          const assigneeSelect = document.getElementById(
+            "modalActivityAssignee"
+          );
+          let availableUsers = users;
+
+          if (currentUser.rol === "profesor") {
+            availableUsers = users.filter(
+              (u) => u.rol === "docente" || u.rol === "profesor"
+            );
+          }
+
+          assigneeSelect.innerHTML =
+            '<option value="">Seleccionar usuario</option>' +
+            availableUsers
+              .map(
+                (user) => `<option value="${user.id}">${user.nombre}</option>`
+              )
+              .join("");
+
+          assigneeSelect.value = activity.asignadoA;
+
+          document.getElementById("activityModal").classList.remove("hidden");
+          document.getElementById("activityModal").dataset.editId = activityId;
+        } catch (error) {
+          showNotification("Error al cargar actividad", "error");
+        }
+      }
+
+      async function deleteActivity(activityId) {
+        if (confirm("¿Estás seguro de que deseas eliminar esta actividad?")) {
+          try {
+            await deleteRecord("activities", activityId);
+            loadActivities();
+            showNotification("Actividad eliminada exitosamente", "success");
+          } catch (error) {
+            showNotification("Error al eliminar actividad", "error");
+          }
+        }
+      }
+
+      function addTeacher() {
+        document.getElementById("teacherModalTitle").textContent =
+          "Agregar Docente";
+        document.getElementById("teacherForm").reset();
+        document.getElementById("teacherModal").classList.remove("hidden");
+      }
+
+      async function editTeacher(teacherId) {
+        try {
+          const teachers = await fetchData("teachers");
+          const teacher = teachers.find((t) => t.id === teacherId);
+          if (!teacher) return;
+
+          document.getElementById("teacherModalTitle").textContent =
+            "Editar Docente";
+          document.getElementById("modalTeacherName").value = teacher.nombre;
+          document.getElementById("modalTeacherEmail").value = teacher.email;
+          document.getElementById("modalTeacherSpecialty").value =
+            teacher.especialidad;
+          document.getElementById("modalTeacherPhone").value = teacher.telefono;
+          document.getElementById("modalTeacherStatus").value = teacher.estado;
+          document.getElementById("modalTeacherNotes").value =
+            teacher.notas || "";
+
+          document.getElementById("teacherModal").classList.remove("hidden");
+          document.getElementById("teacherModal").dataset.editId = teacherId;
+        } catch (error) {
+          showNotification("Error al cargar docente", "error");
+        }
+      }
+
+      async function deleteTeacher(teacherId) {
+        if (confirm("¿Estás seguro de que deseas eliminar este docente?")) {
+          try {
+            await deleteRecord("teachers", teacherId);
+            loadTeachers();
+            showNotification("Docente eliminado exitosamente", "success");
+          } catch (error) {
+            showNotification("Error al eliminar docente", "error");
+          }
+        }
+      }
+
+      async function generateIndividualReport() {
+        const userId = document.getElementById("userSelect").value;
+        if (!userId) {
+          showNotification("Por favor selecciona un usuario", "warning");
+          return;
+        }
+
+        try {
+          const users = await fetchData("users");
+          const user = users.find((u) => u.id == userId);
+
+          showNotification(
+            `Generando reporte individual para ${user.nombre}...`,
+            "info"
+          );
+
+          const reportData = {
+            type: "individual",
+            userId: parseInt(userId),
+            generatedBy: currentUser.id,
+          };
+
+          await generateReport(reportData);
+          showNotification(
+            "Reporte individual generado exitosamente",
+            "success"
+          );
+        } catch (error) {
+          showNotification("Error al generar reporte individual", "error");
+        }
+      }
+
+      async function generateGeneralReport() {
+        const startDate = document.getElementById("startDate").value;
+        const endDate = document.getElementById("endDate").value;
+
+        if (!startDate || !endDate) {
+          showNotification("Por favor selecciona las fechas", "warning");
+          return;
+        }
+
+        try {
+          showNotification("Generando reporte general...", "info");
+
+          const reportData = {
+            type: "general",
+            startDate,
+            endDate,
+            generatedBy: currentUser.id,
+          };
+
+          await generateReport(reportData);
+          showNotification("Reporte general generado exitosamente", "success");
+          loadReports(); // Recargar para mostrar el nuevo progreso
+        } catch (error) {
+          showNotification("Error al generar reporte general", "error");
+        }
+      }
+
+      // Event Listeners
+      document.addEventListener("DOMContentLoaded", function () {
+        // Login form
+        document
+          .getElementById("loginForm")
+          .addEventListener("submit", async function (e) {
+            e.preventDefault();
+            const career = document.getElementById("career").value;
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+
+            if (!career) {
+              showNotification("Por favor selecciona una carrera", "warning");
+              return;
+            }
+
             try {
-                await updateActivityStatus(activityId, 'completed');
-                loadActivities();
-                updateStats();
+              currentCareer = career;
+              const user = await authenticateUser(career, email, password);
+
+              if (user) {
+                currentUser = user;
+
+                document.getElementById("loginScreen").classList.add("hidden");
+                document.getElementById("dashboard").classList.remove("hidden");
+
+                // Actualizar header
+                document.getElementById("headerUserName").textContent =
+                  user.nombre;
+                document.getElementById("headerUserRole").textContent =
+                  user.rol.charAt(0).toUpperCase() + user.rol.slice(1);
+
+                // Mostrar selector de carrera solo para administradores
+                if (hasPermission("switch_career")) {
+                  document
+                    .getElementById("careerSelector")
+                    .classList.remove("hidden");
+                }
+
+                updateCareerUI();
+                generateMenu();
+                showSection("overview");
+                showNotification(
+                  `Bienvenido, ${user.nombre}! Conectado a Google Sheets`,
+                  "success"
+                );
+              } else {
+                showNotification("Credenciales incorrectas", "error");
+              }
             } catch (error) {
-                console.error('Error marking activity as completed:', error);
+              showNotification("Error al conectar con Google Sheets", "error");
             }
-        }
+          });
 
-        function editActivity(activityId) {
-            showNotification('Función de edición disponible próximamente', 'info');
-        }
-
-        async function deleteActivity(activityId) {
-            if (confirm('¿Está seguro de eliminar esta actividad?')) {
-                try {
-                    setLoadingState(true);
-                    
-                    activities = activities.filter(a => a.id !== activityId);
-                    saveDataToStorage();
-                    
-                    await new Promise(resolve => setTimeout(resolve, 500));
-                    
-                    loadActivities();
-                    updateStats();
-                    setLoadingState(false);
-                    showNotification('Actividad eliminada permanentemente', 'success');
-                } catch (error) {
-                    setLoadingState(false);
-                    showNotification('Error al eliminar actividad', 'error');
-                }
+        // Switch career (solo administradores)
+        document
+          .getElementById("switchCareer")
+          .addEventListener("change", async function (e) {
+            if (hasPermission("switch_career")) {
+              currentCareer = e.target.value;
+              updateCareerUI();
+              showSection("overview");
+              showNotification(
+                `Cambiado a ${e.target.options[e.target.selectedIndex].text}`,
+                "info"
+              );
             }
-        }
+          });
 
-        // Admin functions
-        function clearAllData() {
-            if (currentUser && currentUser.role === 'admin') {
-                if (confirm('¿Está seguro de eliminar TODOS los datos? Esta acción no se puede deshacer.')) {
-                    if (confirm('CONFIRMACIÓN FINAL: Se eliminarán todos los usuarios y actividades. ¿Continuar?')) {
-                        try {
-                            localStorage.removeItem(STORAGE_KEYS.USERS);
-                            localStorage.removeItem(STORAGE_KEYS.ACTIVITIES);
-                            localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
-                            localStorage.removeItem(STORAGE_KEYS.LAST_SYNC);
-                            
-                            users = [];
-                            activities = [];
-                            currentUser = null;
-                            
-                            createInitialData();
-                            saveDataToStorage();
-                            
-                            logout();
-                            
-                            showNotification('Todos los datos han sido eliminados y reiniciados', 'success');
-                        } catch (error) {
-                            showNotification('Error al eliminar datos', 'error');
-                        }
-                    }
-                }
-            } else {
-                showNotification('Solo el administrador puede eliminar todos los datos', 'error');
+        // Logout
+        document
+          .getElementById("logoutBtn")
+          .addEventListener("click", function () {
+            currentUser = null;
+            currentCareer = "software";
+            cachedData = {
+              software: {
+                users: [],
+                activities: [],
+                teachers: [],
+                progress: [],
+              },
+              mecatronica: {
+                users: [],
+                activities: [],
+                teachers: [],
+                progress: [],
+              },
+            };
+            document.getElementById("dashboard").classList.add("hidden");
+            document.getElementById("loginScreen").classList.remove("hidden");
+            document.getElementById("loginForm").reset();
+            document.getElementById("careerSelector").classList.add("hidden");
+            showNotification("Sesión cerrada exitosamente", "success");
+          });
+
+        // User modal events
+        document
+          .getElementById("addUserBtn")
+          .addEventListener("click", addUser);
+        document
+          .getElementById("closeUserModal")
+          .addEventListener("click", () => {
+            document.getElementById("userModal").classList.add("hidden");
+          });
+        document
+          .getElementById("cancelUserModal")
+          .addEventListener("click", () => {
+            document.getElementById("userModal").classList.add("hidden");
+          });
+
+        document
+          .getElementById("userForm")
+          .addEventListener("submit", async function (e) {
+            e.preventDefault();
+            const editId = document.getElementById("userModal").dataset.editId;
+
+            const userData = {
+              nombre: document.getElementById("modalUserName").value,
+              email: document.getElementById("modalUserEmail").value,
+              rol: document.getElementById("modalUserRole").value,
+              password: document.getElementById("modalUserPassword").value,
+              telefono: document.getElementById("modalUserPhone").value,
+              especialidad: document.getElementById("modalUserSpecialty").value,
+            };
+
+            try {
+              if (editId) {
+                userData.id = parseInt(editId);
+                await updateRecord("users", userData);
+                showNotification("Usuario actualizado exitosamente", "success");
+              } else {
+                await createRecord("users", userData);
+                showNotification("Usuario agregado exitosamente", "success");
+              }
+
+              document.getElementById("userModal").classList.add("hidden");
+              delete document.getElementById("userModal").dataset.editId;
+              loadUsers();
+            } catch (error) {
+              showNotification("Error al guardar usuario", "error");
             }
-        }
+          });
 
-        function exportData() {
-            if (currentUser && currentUser.role === 'admin') {
-                try {
-                    const exportData = {
-                        users: users,
-                        activities: activities,
-                        exportDate: new Date().toISOString(),
-                        exportedBy: currentUser.name,
-                        sheetsConnected: sheetsConnected
-                    };
-                    
-                    const dataStr = JSON.stringify(exportData, null, 2);
-                    const dataBlob = new Blob([dataStr], {type: 'application/json'});
-                    
-                    const link = document.createElement('a');
-                    link.href = URL.createObjectURL(dataBlob);
-                    link.download = `itson_backup_${new Date().toISOString().split('T')[0]}.json`;
-                    link.click();
-                    
-                    showNotification('Datos exportados exitosamente', 'success');
-                } catch (error) {
-                    showNotification('Error al exportar datos', 'error');
-                }
-            } else {
-                showNotification('Solo el administrador puede exportar datos', 'error');
+        // Activity modal events
+        document
+          .getElementById("addActivityBtn")
+          .addEventListener("click", addActivity);
+        document
+          .getElementById("closeActivityModal")
+          .addEventListener("click", () => {
+            document.getElementById("activityModal").classList.add("hidden");
+          });
+        document
+          .getElementById("cancelActivityModal")
+          .addEventListener("click", () => {
+            document.getElementById("activityModal").classList.add("hidden");
+          });
+
+        document
+          .getElementById("activityForm")
+          .addEventListener("submit", async function (e) {
+            e.preventDefault();
+            const editId =
+              document.getElementById("activityModal").dataset.editId;
+
+            const activityData = {
+              titulo: document.getElementById("modalActivityTitle").value,
+              descripcion: document.getElementById("modalActivityDescription")
+                .value,
+              fechaLimite: document.getElementById("modalActivityDeadline")
+                .value,
+              prioridad: document.getElementById("modalActivityPriority").value,
+              estado: document.getElementById("modalActivityStatus").value,
+              asignadoA: parseInt(
+                document.getElementById("modalActivityAssignee").value
+              ),
+              notas: document.getElementById("modalActivityNotes").value,
+              creadoPor: currentUser.id,
+            };
+
+            try {
+              if (editId) {
+                activityData.id = parseInt(editId);
+                await updateRecord("activities", activityData);
+                showNotification(
+                  "Actividad actualizada exitosamente",
+                  "success"
+                );
+              } else {
+                await createRecord("activities", activityData);
+                showNotification("Actividad creada exitosamente", "success");
+              }
+
+              document.getElementById("activityModal").classList.add("hidden");
+              delete document.getElementById("activityModal").dataset.editId;
+              loadActivities();
+            } catch (error) {
+              showNotification("Error al guardar actividad", "error");
             }
-        }
+          });
 
-        function editUser(userId) {
-            showNotification('Función de edición disponible próximamente', 'info');
-        }
+        // Teacher modal events
+        document
+          .getElementById("addTeacherBtn")
+          .addEventListener("click", addTeacher);
+        document
+          .getElementById("closeTeacherModal")
+          .addEventListener("click", () => {
+            document.getElementById("teacherModal").classList.add("hidden");
+          });
+        document
+          .getElementById("cancelTeacherModal")
+          .addEventListener("click", () => {
+            document.getElementById("teacherModal").classList.add("hidden");
+          });
 
-        async function deleteUser(userId) {
-            if (confirm('¿Está seguro de eliminar este usuario?')) {
-                try {
-                    setLoadingState(true);
-                    
-                    users = users.filter(u => u.id !== userId);
-                    saveDataToStorage();
-                    
-                    await new Promise(resolve => setTimeout(resolve, 500));
-                    
-                    loadUsers();
-                    updateStats();
-                    setLoadingState(false);
-                    showNotification('Usuario eliminado permanentemente', 'success');
-                } catch (error) {
-                    setLoadingState(false);
-                    showNotification('Error al eliminar usuario', 'error');
-                }
+        document
+          .getElementById("teacherForm")
+          .addEventListener("submit", async function (e) {
+            e.preventDefault();
+            const editId =
+              document.getElementById("teacherModal").dataset.editId;
+
+            const teacherData = {
+              nombre: document.getElementById("modalTeacherName").value,
+              email: document.getElementById("modalTeacherEmail").value,
+              especialidad: document.getElementById("modalTeacherSpecialty")
+                .value,
+              telefono: document.getElementById("modalTeacherPhone").value,
+              estado: document.getElementById("modalTeacherStatus").value,
+              notas: document.getElementById("modalTeacherNotes").value,
+            };
+
+            try {
+              if (editId) {
+                teacherData.id = parseInt(editId);
+                await updateRecord("teachers", teacherData);
+                showNotification("Docente actualizado exitosamente", "success");
+              } else {
+                await createRecord("teachers", teacherData);
+                showNotification("Docente agregado exitosamente", "success");
+              }
+
+              document.getElementById("teacherModal").classList.add("hidden");
+              delete document.getElementById("teacherModal").dataset.editId;
+              loadTeachers();
+            } catch (error) {
+              showNotification("Error al guardar docente", "error");
             }
-        }
+          });
 
-        // Update statistics
-        function updateStats() {
-            const totalTeachers = users.filter(u => u.program !== 'admin').length;
-            const softwareTeachers = users.filter(u => u.program === 'software').length;
-            const mechatronicsTeachers = users.filter(u => u.program === 'mechatronics').length;
-            const activeActivities = activities.filter(a => a.status !== 'completed').length;
-            
-            document.getElementById('totalTeachers').textContent = totalTeachers;
-            document.getElementById('softwareTeachers').textContent = softwareTeachers;
-            document.getElementById('mechatronicsTeachers').textContent = mechatronicsTeachers;
-            document.getElementById('activeActivities').textContent = activeActivities;
-            
-            updateReportsStats();
-            updateAdminPanel();
-        }
+        // Report events
+        document
+          .getElementById("generateIndividualReport")
+          .addEventListener("click", generateIndividualReport);
+        document
+          .getElementById("generateGeneralReport")
+          .addEventListener("click", generateGeneralReport);
 
-        function updateReportsStats() {
-            const completed = activities.filter(a => a.status === 'completed').length;
-            const inProgress = activities.filter(a => a.status === 'in-progress').length;
-            const pending = activities.filter(a => a.status === 'pending').length;
-            
-            document.getElementById('completedCount').textContent = completed;
-            document.getElementById('inProgressCount').textContent = inProgress;
-            document.getElementById('pendingCount').textContent = pending;
-            
-            const softwareActivities = activities.filter(a => a.program === 'software');
-            const mechatronicsActivities = activities.filter(a => a.program === 'mechatronics');
-            
-            const softwareCompleted = softwareActivities.filter(a => a.status === 'completed').length;
-            const mechatronicsCompleted = mechatronicsActivities.filter(a => a.status === 'completed').length;
-            
-            const softwareProgress = softwareActivities.length > 0 ? 
-                Math.round((softwareCompleted / softwareActivities.length) * 100) : 0;
-            const mechatronicsProgress = mechatronicsActivities.length > 0 ? 
-                Math.round((mechatronicsCompleted / mechatronicsActivities.length) * 100) : 0;
-            
-            document.getElementById('softwareProgress').textContent = `${softwareProgress}%`;
-            document.getElementById('mechatronicsProgress').textContent = `${mechatronicsProgress}%`;
-            document.getElementById('softwareProgressBar').style.width = `${softwareProgress}%`;
-            document.getElementById('mechatronicsProgressBar').style.width = `${mechatronicsProgress}%`;
-        }
+        // Profile events
+        document
+          .getElementById("saveProfileBtn")
+          .addEventListener("click", async function () {
+            try {
+              const updatedUser = {
+                ...currentUser,
+                nombre: document.getElementById("fullName").value,
+                email: document.getElementById("emailProfile").value,
+                telefono: document.getElementById("phone").value,
+                especialidad: document.getElementById("specialty").value,
+              };
 
-        function updateAdminPanel() {
-            const lastSync = localStorage.getItem(STORAGE_KEYS.LAST_SYNC);
-            if (lastSync) {
-                const date = new Date(lastSync);
-                document.getElementById('lastUpdateTime').textContent = date.toLocaleString('es-MX');
+              await updateRecord("users", updatedUser);
+              currentUser = updatedUser;
+
+              // Actualizar header
+              document.getElementById("headerUserName").textContent =
+                currentUser.nombre;
+
+              showNotification("Perfil actualizado exitosamente", "success");
+            } catch (error) {
+              showNotification("Error al actualizar perfil", "error");
             }
-            
-            const totalRecords = users.length + activities.length;
-            document.getElementById('totalRecords').textContent = `${totalRecords} registros`;
-            
-            const adminPanel = document.getElementById('adminPanel');
-            if (currentUser && currentUser.role === 'admin') {
-                adminPanel.style.display = 'block';
-            } else {
-                adminPanel.style.display = 'none';
-            }
-        }
+          });
 
-        function showDataSummary() {
-            if (currentUser && currentUser.role === 'admin') {
-                const summary = {
-                    totalUsers: users.length,
-                    totalActivities: activities.length,
-                    usersByProgram: {
-                        software: users.filter(u => u.program === 'software').length,
-                        mechatronics: users.filter(u => u.program === 'mechatronics').length,
-                        admin: users.filter(u => u.program === 'admin').length
-                    },
-                    activitiesByStatus: {
-                        completed: activities.filter(a => a.status === 'completed').length,
-                        inProgress: activities.filter(a => a.status === 'in-progress').length,
-                        pending: activities.filter(a => a.status === 'pending').length
-                    },
-                    activitiesByProgram: {
-                        software: activities.filter(a => a.program === 'software').length,
-                        mechatronics: activities.filter(a => a.program === 'mechatronics').length
-                    }
+        document
+          .getElementById("changePasswordBtn")
+          .addEventListener("click", async function () {
+            const newPassword = prompt("Ingresa tu nueva contraseña:");
+            if (newPassword && newPassword.length >= 6) {
+              try {
+                const updatedUser = {
+                  ...currentUser,
+                  password: newPassword,
                 };
-                
-                const summaryText = `
-📊 RESUMEN DETALLADO DEL SISTEMA
 
-🔗 CONEXIÓN:
-• Google Sheets: ${sheetsConnected ? 'Conectado ✅' : 'Desconectado ❌'}
-• Almacenamiento: Local permanente ✅
-
-👥 USUARIOS:
-• Total: ${summary.totalUsers}
-• Ing. Software: ${summary.usersByProgram.software}
-• Ing. Mecatrónica: ${summary.usersByProgram.mechatronics}
-• Administradores: ${summary.usersByProgram.admin}
-
-📋 ACTIVIDADES:
-• Total: ${summary.totalActivities}
-• Completadas: ${summary.activitiesByStatus.completed}
-• En Progreso: ${summary.activitiesByStatus.inProgress}
-• Pendientes: ${summary.activitiesByStatus.pending}
-
-📚 POR PROGRAMA:
-• Software: ${summary.activitiesByProgram.software} actividades
-• Mecatrónica: ${summary.activitiesByProgram.mechatronics} actividades
-
-💾 ALMACENAMIENTO:
-• Datos guardados localmente: ✅
-• Sincronización con Sheets: ${sheetsConnected ? 'Activa' : 'Manual'}
-• Última actualización: ${new Date().toLocaleString('es-MX')}
-                `;
-                
-                alert(summaryText);
-            } else {
-                showNotification('Solo el administrador puede ver el resumen detallado', 'error');
+                await updateRecord("users", updatedUser);
+                currentUser = updatedUser;
+                showNotification(
+                  "Contraseña actualizada exitosamente",
+                  "success"
+                );
+              } catch (error) {
+                showNotification("Error al actualizar contraseña", "error");
+              }
+            } else if (newPassword) {
+              showNotification(
+                "La contraseña debe tener al menos 6 caracteres",
+                "error"
+              );
             }
-        }
+          });
 
-        // Initialize the application
-        document.addEventListener('DOMContentLoaded', function() {
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('newActivityDeadline').setAttribute('min', today);
-            
-            if (!checkExistingSession()) {
-                // Show initial loading state
-                updateSyncStatus('Sistema iniciando...', 'loading');
-            }
-        });
+        document
+          .getElementById("changePhotoBtn")
+          .addEventListener("click", function () {
+            showNotification(
+              "Funcionalidad de cambio de foto disponible en próxima versión",
+              "info"
+            );
+          });
+
+        document
+          .getElementById("resetPasswordBtn")
+          .addEventListener("click", function () {
+            showNotification(
+              "Funcionalidad de recuperación de contraseña disponible en próxima versión",
+              "info"
+            );
+          });
+      });
+
+      // Funciones globales para los botones
+      window.showSection = showSection;
+      window.addUser = addUser;
+      window.editUser = editUser;
+      window.deleteUser = deleteUser;
+      window.addActivity = addActivity;
+      window.editActivity = editActivity;
+      window.deleteActivity = deleteActivity;
+      window.addTeacher = addTeacher;
+      window.editTeacher = editTeacher;
+      window.deleteTeacher = deleteTeacher;
+      window.generateIndividualReport = generateIndividualReport;
+      window.generateGeneralReport = generateGeneralReport;
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'975fa7cdd0e45257',t:'MTc1NjM0MDU1OS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+    <script>
+      (function () {
+        function c() {
+          var b = a.contentDocument || a.contentWindow.document;
+          if (b) {
+            var d = b.createElement("script");
+            d.innerHTML =
+              "window.__CF$cv$params={r:'97686dd384f3f7ad',t:'MTc1NjQzMjU1Ni4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";
+            b.getElementsByTagName("head")[0].appendChild(d);
+          }
+        }
+        if (document.body) {
+          var a = document.createElement("iframe");
+          a.height = 1;
+          a.width = 1;
+          a.style.position = "absolute";
+          a.style.top = 0;
+          a.style.left = 0;
+          a.style.border = "none";
+          a.style.visibility = "hidden";
+          document.body.appendChild(a);
+          if ("loading" !== document.readyState) c();
+          else if (window.addEventListener)
+            document.addEventListener("DOMContentLoaded", c);
+          else {
+            var e = document.onreadystatechange || function () {};
+            document.onreadystatechange = function (b) {
+              e(b);
+              "loading" !== document.readyState &&
+                ((document.onreadystatechange = e), c());
+            };
+          }
+        }
+      })();
+    </script>
+  </body>
 </html>
-
