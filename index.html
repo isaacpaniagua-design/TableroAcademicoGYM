@@ -1099,7 +1099,10 @@
         userId = null
       ) {
         try {
-          if (GOOGLE_SCRIPT_URL === "AQUI_VA_TU_URL_DEL_WEB_APP") {
+          if (
+            GOOGLE_SCRIPT_URL ===
+            "https://script.google.com/macros/s/AKfycbzKpSYn6PB2V7gVkNPFx0vjXJ_OfhHKqp9rJcdPmXNvmtsICxODUpse_O_nWFVLr8yRwg/exec"
+          ) {
             throw new Error(
               "⚠️ Debes configurar la URL de tu Google Apps Script en la línea 49"
             );
@@ -2196,8 +2199,12 @@
                 updateCareerUI();
                 generateMenu();
                 showSection("overview");
+
+                // Iniciar sincronización en tiempo real
+                startRealTimeSync();
+
                 showNotification(
-                  `Bienvenido, ${user.nombre}! Conectado a Google Sheets`,
+                  `Bienvenido, ${user.nombre}! Sincronización en tiempo real activada`,
                   "success"
                 );
               } else {
@@ -2223,10 +2230,71 @@
             }
           });
 
+        // Configurar detección de red y sincronización
+        setupNetworkDetection();
+
+        // Eventos de sincronización
+        document
+          .getElementById("syncSettingsBtn")
+          .addEventListener("click", function (e) {
+            e.stopPropagation();
+            const dropdown = document.getElementById("syncSettingsDropdown");
+            dropdown.classList.toggle("hidden");
+            updateSyncStats();
+          });
+
+        // Cerrar dropdown al hacer clic fuera
+        document.addEventListener("click", function (e) {
+          const dropdown = document.getElementById("syncSettingsDropdown");
+          const button = document.getElementById("syncSettingsBtn");
+          if (!dropdown.contains(e.target) && !button.contains(e.target)) {
+            dropdown.classList.add("hidden");
+          }
+        });
+
+        // Cambiar frecuencia de sincronización
+        document
+          .getElementById("syncFrequencySelect")
+          .addEventListener("change", function (e) {
+            const seconds = parseInt(e.target.value);
+            setSyncFrequency(seconds);
+            showNotification(
+              `Frecuencia actualizada: cada ${seconds}s`,
+              "info"
+            );
+          });
+
+        // Toggle sincronización automática
+        document
+          .getElementById("toggleSyncBtn")
+          .addEventListener("click", function () {
+            const stats = getSyncStats();
+            if (stats.isActive) {
+              stopRealTimeSync();
+              this.textContent = "Inactiva";
+              this.className =
+                "px-3 py-1 text-xs bg-red-100 text-red-800 rounded-full";
+              showNotification(
+                "Sincronización automática desactivada",
+                "warning"
+              );
+            } else {
+              startRealTimeSync();
+              this.textContent = "Activa";
+              this.className =
+                "px-3 py-1 text-xs bg-green-100 text-green-800 rounded-full";
+              showNotification("Sincronización automática activada", "success");
+            }
+            updateSyncStats();
+          });
+
         // Logout
         document
           .getElementById("logoutBtn")
           .addEventListener("click", function () {
+            // Detener sincronización
+            stopRealTimeSync();
+
             currentUser = null;
             currentCareer = "software";
             cachedData = {
@@ -2243,6 +2311,8 @@
                 progress: [],
               },
             };
+            lastSyncTime = {};
+
             document.getElementById("dashboard").classList.add("hidden");
             document.getElementById("loginScreen").classList.remove("hidden");
             document.getElementById("loginForm").reset();
@@ -2487,6 +2557,53 @@
           });
       });
 
+      /**
+       * Actualiza las estadísticas de sincronización en el dropdown
+       */
+      function updateSyncStats() {
+        const stats = getSyncStats();
+        const statsElement = document.getElementById("syncStats");
+
+        const lastSyncTimes = Object.entries(stats.lastSyncTimes)
+          .filter(([key]) => key.startsWith(currentCareer))
+          .map(([key, time]) => {
+            const type = key.split("_")[1];
+            const date = new Date(time);
+            return `${type}: ${date.toLocaleTimeString()}`;
+          });
+
+        statsElement.innerHTML = `
+                <div class="space-y-1">
+                    <div>Estado: ${
+                      stats.isActive ? "🟢 Activa" : "🔴 Inactiva"
+                    }</div>
+                    <div>Frecuencia: ${stats.frequency}s</div>
+                    <div>Conexión: ${
+                      stats.isOnline ? "🟢 Online" : "🔴 Offline"
+                    }</div>
+                    ${
+                      stats.retryAttempts > 0
+                        ? `<div>Reintentos: ${stats.retryAttempts}/${maxRetryAttempts}</div>`
+                        : ""
+                    }
+                    ${
+                      lastSyncTimes.length > 0
+                        ? `
+                        <div class="mt-2">
+                            <div class="font-medium">Última sincronización:</div>
+                            ${lastSyncTimes
+                              .map(
+                                (time) => `<div class="ml-2">• ${time}</div>`
+                              )
+                              .join("")}
+                        </div>
+                    `
+                        : ""
+                    }
+                </div>
+            `;
+      }
+
       // Funciones globales para los botones
       window.showSection = showSection;
       window.addUser = addUser;
@@ -2500,6 +2617,7 @@
       window.deleteTeacher = deleteTeacher;
       window.generateIndividualReport = generateIndividualReport;
       window.generateGeneralReport = generateGeneralReport;
+      window.forceSyncNow = forceSyncNow;
     </script>
     <script>
       (function () {
@@ -2508,7 +2626,7 @@
           if (b) {
             var d = b.createElement("script");
             d.innerHTML =
-              "window.__CF$cv$params={r:'97686dd384f3f7ad',t:'MTc1NjQzMjU1Ni4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";
+              "window.__CF$cv$params={r:'97687b9223224adb',t:'MTc1NjQzMzExOS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";
             b.getElementsByTagName("head")[0].appendChild(d);
           }
         }
