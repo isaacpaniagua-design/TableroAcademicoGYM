@@ -180,8 +180,39 @@
           </button>
         </div>
 
+        <!-- Configuración rápida de Google Sheets -->
+        <div class="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <h4
+            class="text-sm font-semibold text-blue-800 mb-3 flex items-center"
+          >
+            <i class="fas fa-rocket mr-2"></i>Configuración Rápida
+          </h4>
+          <div class="space-y-3">
+            <div>
+              <label class="block text-xs font-medium text-blue-700 mb-1"
+                >URL de tu Google Apps Script:</label
+              >
+              <input
+                type="url"
+                id="quickSetupUrl"
+                class="w-full px-3 py-2 text-sm border border-blue-300 rounded-lg"
+                placeholder="https://script.google.com/macros/s/.../exec"
+              />
+            </div>
+            <button
+              onclick="quickSetupGoogleSheets()"
+              class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition duration-200 text-sm"
+            >
+              <i class="fas fa-link mr-2"></i>Conectar Ahora
+            </button>
+          </div>
+          <p class="text-xs text-blue-600 mt-2">
+            💡 Si no tienes la URL, haz clic en "Configurar Google Sheets" abajo
+          </p>
+        </div>
+
         <!-- Usuarios de prueba -->
-        <div class="mt-8 p-4 bg-gray-50 rounded-lg">
+        <div class="mt-4 p-4 bg-gray-50 rounded-lg">
           <p class="text-xs text-gray-600 mb-2">
             Usuarios de prueba (se crean automáticamente):
           </p>
@@ -1604,6 +1635,30 @@
                   showNotification('Código copiado al portapapeles', 'success');
               }
 
+              /**
+               * Configuración rápida desde el login
+               */
+              function quickSetupGoogleSheets() {
+                  const url = document.getElementById('quickSetupUrl').value.trim();
+
+                  if (!url) {
+                      showNotification('Por favor ingresa la URL de tu Google Apps Script', 'warning');
+                      return;
+                  }
+
+                  if (!url.includes('script.google.com')) {
+                      showNotification('Por favor ingresa una URL válida de Google Apps Script', 'error');
+                      return;
+                  }
+
+                  GOOGLE_SCRIPT_URL = url;
+                  updateConnectionStatus('connected');
+                  showNotification('¡Conexión configurada exitosamente! Ya puedes iniciar sesión.', 'success');
+
+                  // Limpiar el campo
+                  document.getElementById('quickSetupUrl').value = '';
+              }
+
               // ============================================================================
               // FUNCIONES DE COMUNICACIÓN CON GOOGLE APPS SCRIPT
               // ============================================================================
@@ -2701,7 +2756,8 @@
               // ============================================================================
 
               document.addEventListener('DOMContentLoaded', function() {
-                  // Configurar det<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97689f6d41cb2eb7',t:'MTc1NjQzNDU4Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();
+                  // Configurar det
+      <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9768aa92c13b83f1',t:'MTc1NjQzNTA0NC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();
     </script>
   </body>
 </html>
